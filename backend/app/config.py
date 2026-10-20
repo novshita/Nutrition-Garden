@@ -25,6 +25,10 @@ ACTIVITY_MULTIPLIERS: dict[ActivityLevel, float] = {
 }
 
 
+# Engineering spec §12: initial default target is TDEE + 250 kcal/day.
+INITIAL_SURPLUS_KCAL = 250
+
+
 class Settings(BaseSettings):
     """Environment settings (engineering spec §53). Secrets never live in code."""
 
