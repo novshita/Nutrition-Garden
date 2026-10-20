@@ -1,7 +1,6 @@
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+from sqlalchemy import engine_from_config, pool
 
 from alembic import context
 
@@ -14,9 +13,9 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
+import app.models  # noqa: F401  (registers models on Base.metadata)
 from app.config import get_settings
 from app.db.base import Base
-import app.models  # noqa: F401  (registers models on Base.metadata)
 
 # The database URL comes from the environment, never from alembic.ini.
 config.set_main_option("sqlalchemy.url", get_settings().database_url.replace("%", "%%"))

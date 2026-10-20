@@ -1,18 +1,11 @@
-from enum import Enum
 from functools import lru_cache
 from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from app.enums import ActivityLevel
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
-
-
-class ActivityLevel(str, Enum):
-    SEDENTARY = "SEDENTARY"
-    LIGHT = "LIGHT"
-    MODERATE = "MODERATE"
-    VERY_ACTIVE = "VERY_ACTIVE"
-    EXTRA_ACTIVE = "EXTRA_ACTIVE"
 
 
 # Engineering spec §10: centralized, configurable activity multipliers.

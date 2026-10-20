@@ -4,14 +4,9 @@ These are the authoritative calculations; AI must never compute them.
 """
 
 from datetime import date
-from enum import Enum
 
-from app.config import ACTIVITY_MULTIPLIERS, INITIAL_SURPLUS_KCAL, ActivityLevel
-
-
-class Sex(str, Enum):
-    MALE = "MALE"
-    FEMALE = "FEMALE"
+from app.config import ACTIVITY_MULTIPLIERS, INITIAL_SURPLUS_KCAL
+from app.enums import ActivityLevel, Sex
 
 
 def _require_positive(name: str, value: float) -> None:

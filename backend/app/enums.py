@@ -1,0 +1,25 @@
+from enum import Enum
+
+
+class Sex(str, Enum):
+    MALE = "MALE"
+    FEMALE = "FEMALE"
+
+
+class UnitSystem(str, Enum):
+    METRIC = "METRIC"
+    IMPERIAL = "IMPERIAL"
+
+
+class ActivityLevel(str, Enum):
+    SEDENTARY = "SEDENTARY"
+    LIGHT = "LIGHT"
+    MODERATE = "MODERATE"
+    VERY_ACTIVE = "VERY_ACTIVE"
+    EXTRA_ACTIVE = "EXTRA_ACTIVE"
+
+
+class GoalType(str, Enum):
+    """V1 supports gradual, sustainable weight gain only (product spec §9)."""
+
+    GAIN_WEIGHT = "GAIN_WEIGHT"
