@@ -8,7 +8,7 @@ from app.models import User, UserProfile, WeightLog
 
 
 def make_user(email="a@example.com") -> User:
-    return User(email=email, display_name="A")
+    return User(email=email, display_name="A", password_hash="x")
 
 
 def make_profile(user: User, **overrides) -> UserProfile:

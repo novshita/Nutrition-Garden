@@ -1,3 +1,3 @@
-from app.models.user import User, UserProfile, WeightLog
+from app.models.user import AuthSession, User, UserProfile, WeightLog
 
-__all__ = ["User", "UserProfile", "WeightLog"]
+__all__ = ["AuthSession", "User", "UserProfile", "WeightLog"]
