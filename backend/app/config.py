@@ -18,6 +18,9 @@ ACTIVITY_MULTIPLIERS: dict[ActivityLevel, float] = {
 }
 
 
+SESSION_COOKIE_NAME = "garden_session"
+SESSION_LIFETIME_DAYS = 30
+
 # Engineering spec §12: initial default target is TDEE + 250 kcal/day.
 INITIAL_SURPLUS_KCAL = 250
 
