@@ -10,6 +10,7 @@ from app.enums import CalorieTargetSource, GoalType
 from app.models import User, UserProfile, WeightLog
 from app.schemas.profile import ProfileCreate, ProfileResponse, ProfileSummary
 from app.services import goals
+from app.services import weight as weight_service
 from app.services.calculations import body
 
 
@@ -51,12 +52,7 @@ def get_summary(db: Session, user: User) -> ProfileSummary | None:
     profile = db.scalar(select(UserProfile).where(UserProfile.user_id == user.id))
     if profile is None:
         return None
-    latest = db.scalar(
-        select(WeightLog)
-        .where(WeightLog.user_id == user.id)
-        .order_by(WeightLog.recorded_at.desc())
-        .limit(1)
-    )
+    latest = weight_service.get_latest(db, user)
     if latest is None:
         return None
     summary = _build_summary(profile, float(latest.weight_kg))
