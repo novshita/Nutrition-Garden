@@ -27,6 +27,13 @@ MAX_CALORIE_TARGET_KCAL = 6000
 MIN_ONBOARDING_AGE = 18
 MAX_ONBOARDING_AGE = 120
 
+# Weight trend thresholds (spec §15: configurable). Change is kg/week, current 7 days vs previous 7.
+TREND_STABLE_THRESHOLD_KG_PER_WEEK = 0.1
+TREND_FAST_THRESHOLD_KG_PER_WEEK = 0.5
+TREND_WINDOW_DAYS = 7
+# Distinct days with a weigh-in needed across both windows before any trend is reported.
+TREND_MIN_DAYS_WITH_DATA = 3
+
 # Engineering spec §12: initial default target is TDEE + 250 kcal/day.
 INITIAL_SURPLUS_KCAL = 250
 
