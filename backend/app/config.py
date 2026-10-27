@@ -21,6 +21,12 @@ ACTIVITY_MULTIPLIERS: dict[ActivityLevel, float] = {
 SESSION_COOKIE_NAME = "garden_session"
 SESSION_LIFETIME_DAYS = 30
 
+# Bounds for a user-set calorie target (spec §42: no extreme restriction, no unsafe gain).
+MIN_CALORIE_TARGET_KCAL = 1200
+MAX_CALORIE_TARGET_KCAL = 6000
+MIN_ONBOARDING_AGE = 18
+MAX_ONBOARDING_AGE = 120
+
 # Engineering spec §12: initial default target is TDEE + 250 kcal/day.
 INITIAL_SURPLUS_KCAL = 250
 

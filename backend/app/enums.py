@@ -23,3 +23,8 @@ class GoalType(str, Enum):
     """V1 supports gradual, sustainable weight gain only (product spec §9)."""
 
     GAIN_WEIGHT = "GAIN_WEIGHT"
+
+
+class CalorieTargetSource(str, Enum):
+    INITIAL_ESTIMATE = "INITIAL_ESTIMATE"
+    USER_ADJUSTED = "USER_ADJUSTED"
