@@ -34,6 +34,13 @@ TREND_WINDOW_DAYS = 7
 # Distinct days with a weigh-in needed across both windows before any trend is reported.
 TREND_MIN_DAYS_WITH_DATA = 3
 
+# Sanity limits for daily tracking input.
+MAX_WATER_ENTRY_ML = 5000
+MAX_STEPS_PER_DAY = 200_000
+MAX_SLEEP_MINUTES = 24 * 60
+SLEEP_QUALITY_MIN = 1
+SLEEP_QUALITY_MAX = 5
+
 # Engineering spec §12: initial default target is TDEE + 250 kcal/day.
 INITIAL_SURPLUS_KCAL = 250
 

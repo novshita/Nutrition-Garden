@@ -1,18 +1,12 @@
 from datetime import UTC, date, datetime, timedelta
-from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import User, UserProfile, WeightLog
+from app.models import User, WeightLog
 from app.schemas.weight import RollingPoint, TrendResponse
 from app.services.calculations import weight_trend
-
-
-def get_timezone(db: Session, user: User) -> ZoneInfo:
-    """User's timezone from their profile; UTC until onboarding is done (spec §52)."""
-    name = db.scalar(select(UserProfile.timezone).where(UserProfile.user_id == user.id))
-    return ZoneInfo(name or "UTC")
+from app.services.timezone import get_timezone
 
 
 def add_weight(

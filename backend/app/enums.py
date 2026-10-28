@@ -37,3 +37,11 @@ class TrendState(str, Enum):
     DECREASING = "DECREASING"
     INCREASING_FAST = "INCREASING_FAST"
     DECREASING_FAST = "DECREASING_FAST"
+
+
+class Mood(str, Enum):
+    GREAT = "GREAT"
+    GOOD = "GOOD"
+    OKAY = "OKAY"
+    LOW = "LOW"
+    ROUGH = "ROUGH"
