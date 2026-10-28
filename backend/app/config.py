@@ -41,6 +41,11 @@ MAX_SLEEP_MINUTES = 24 * 60
 SLEEP_QUALITY_MIN = 1
 SLEEP_QUALITY_MAX = 5
 
+# USDA FoodData Central (spec §19). The key is sent in a header and never reaches the frontend.
+USDA_BASE_URL = "https://api.nal.usda.gov/fdc/v1"
+USDA_TIMEOUT_SECONDS = 10.0
+USDA_CACHE_TTL_DAYS = 30
+
 # Engineering spec §12: initial default target is TDEE + 250 kcal/day.
 INITIAL_SURPLUS_KCAL = 250
 
