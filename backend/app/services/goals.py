@@ -49,3 +49,13 @@ def set_target(
     db.add(target)
     db.flush()
     return target
+
+
+def get_target_at(db: Session, user: User, at: datetime) -> CalorieTarget | None:
+    """The target that was in effect at `at` (history is never overwritten)."""
+    return db.scalar(
+        select(CalorieTarget)
+        .where(CalorieTarget.user_id == user.id, CalorieTarget.effective_from <= at)
+        .order_by(CalorieTarget.effective_from.desc())
+        .limit(1)
+    )
