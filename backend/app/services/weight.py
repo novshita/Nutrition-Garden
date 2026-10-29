@@ -1,11 +1,13 @@
+import uuid
 from datetime import UTC, date, datetime, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models import User, WeightLog
 from app.schemas.weight import RollingPoint, TrendResponse
 from app.services.calculations import weight_trend
+from app.services.errors import ConflictError, NotFoundError
 from app.services.timezone import get_timezone
 
 
@@ -76,3 +78,15 @@ def get_trend(db: Session, user: User, series_days: int) -> TrendResponse:
 
 def _round(value: float | None) -> float | None:
     return None if value is None else round(value, 2)
+
+
+def delete_weight(db: Session, user: User, entry_id: uuid.UUID) -> None:
+    log = db.scalar(select(WeightLog).where(WeightLog.id == entry_id, WeightLog.user_id == user.id))
+    if log is None:
+        raise NotFoundError
+    count = db.scalar(select(func.count(WeightLog.id)).where(WeightLog.user_id == user.id))
+    if count <= 1:
+        # BMI, BMR and the calorie target all need a current weight.
+        raise ConflictError("At least one weight entry is required")
+    db.delete(log)
+    db.flush()
