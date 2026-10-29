@@ -1,10 +1,12 @@
+import uuid
 from datetime import date
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 
 from app.api.deps import CurrentUser, DbSession
 from app.schemas.food_log import FoodLogCreate, FoodLogDay, FoodLogOut
+from app.services.errors import NotFoundError
 from app.services.nutrition import food_logging
 from app.services.nutrition.usda_client import (
     UsdaClient,
@@ -44,3 +46,26 @@ def list_food_logs(user: CurrentUser, db: DbSession, day: date | None = None) ->
     day = day or local_today(db, user)
     logs = food_logging.list_logs_for_day(db, user, day)
     return FoodLogDay(date=day, logs=[food_logging.log_out(log) for log in logs])
+
+
+@router.delete("/{log_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_food_log(log_id: uuid.UUID, user: CurrentUser, db: DbSession) -> Response:
+    try:
+        food_logging.delete_log(db, user, log_id)
+    except NotFoundError:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Food log not found") from None
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.delete("/{log_id}/items/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_food_log_item(
+    log_id: uuid.UUID, item_id: uuid.UUID, user: CurrentUser, db: DbSession
+) -> Response:
+    """Remove one food from a meal. Removing the last food removes the empty meal."""
+    try:
+        food_logging.delete_item(db, user, log_id, item_id)
+    except NotFoundError:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Food log item not found") from None
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

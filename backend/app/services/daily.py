@@ -1,5 +1,6 @@
 """Water, steps, sleep and mood. One row per local day for all but water."""
 
+import uuid
 from datetime import UTC, date, datetime
 from typing import TypeVar
 
@@ -8,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.models import DailyActivity, MoodLog, SleepLog, User, WaterLog
 from app.schemas.daily import MoodUpdate, SleepUpdate, WaterDay
+from app.services.errors import NotFoundError
 from app.services.timezone import get_timezone, local_day_bounds
 
 T = TypeVar("T")
@@ -63,6 +65,14 @@ def get_water_day(db: Session, user: User, day: date) -> WaterDay:
         )
     )
     return WaterDay(date=day, total_ml=sum(e.amount_ml for e in entries), entries=entries)
+
+
+def delete_water(db: Session, user: User, entry_id: uuid.UUID) -> None:
+    log = db.scalar(select(WaterLog).where(WaterLog.id == entry_id, WaterLog.user_id == user.id))
+    if log is None:
+        raise NotFoundError
+    db.delete(log)
+    db.flush()
 
 
 # Steps ---------------------------------------------------------------------------------

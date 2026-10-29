@@ -3,6 +3,7 @@
 The backend calculates all nutrition; the client only says what and how much was eaten.
 """
 
+import uuid
 from datetime import UTC, date, datetime
 
 from sqlalchemy import select
@@ -20,6 +21,7 @@ from app.schemas.food_log import (
 )
 from app.schemas.nutrition import Micronutrient
 from app.services.calculations import nutrition as calc
+from app.services.errors import NotFoundError
 from app.services.nutrition import food_service
 from app.services.nutrition.usda_client import UsdaClient
 from app.services.timezone import get_timezone, local_day_bounds
@@ -112,6 +114,31 @@ def list_logs_for_day(db: Session, user: User, day: date) -> list[FoodLog]:
             .order_by(FoodLog.consumed_at.asc(), FoodLog.created_at.asc())
         )
     )
+
+
+def _get_owned_log(db: Session, user: User, log_id: uuid.UUID) -> FoodLog:
+    log = db.scalar(select(FoodLog).where(FoodLog.id == log_id, FoodLog.user_id == user.id))
+    if log is None:
+        raise NotFoundError
+    return log
+
+
+def delete_log(db: Session, user: User, log_id: uuid.UUID) -> None:
+    db.delete(_get_owned_log(db, user, log_id))
+    db.flush()
+
+
+def delete_item(db: Session, user: User, log_id: uuid.UUID, item_id: uuid.UUID) -> None:
+    """Remove one food from a meal; removing the last food removes the now-empty meal."""
+    log = _get_owned_log(db, user, log_id)
+    item = next((i for i in log.items if i.id == item_id), None)
+    if item is None:
+        raise NotFoundError
+    if len(log.items) == 1:
+        db.delete(log)
+    else:
+        log.items.remove(item)
+    db.flush()
 
 
 def daily_totals(logs: list[FoodLog]) -> calc.NutritionTotals:
