@@ -67,3 +67,38 @@ class LogSource(str, Enum):
 
     MANUAL = "MANUAL"
     AI_INTERPRETED = "AI_INTERPRETED"
+
+
+class Difficulty(str, Enum):
+    BEGINNER = "BEGINNER"
+    INTERMEDIATE = "INTERMEDIATE"
+    ADVANCED = "ADVANCED"
+    CUSTOM = "CUSTOM"
+
+
+class ExerciseType(str, Enum):
+    REPS = "REPS"
+    TIME = "TIME"
+    COMBINED = "COMBINED"
+
+
+class ExerciseCategory(str, Enum):
+    UPPER_BODY = "UPPER_BODY"
+    LOWER_BODY = "LOWER_BODY"
+    CORE = "CORE"
+    FULL_BODY = "FULL_BODY"
+    CARDIO = "CARDIO"
+    HIIT = "HIIT"
+    MOBILITY = "MOBILITY"
+    STRETCHING = "STRETCHING"
+    YOGA = "YOGA"
+
+
+class Weekday(str, Enum):
+    MONDAY = "MONDAY"
+    TUESDAY = "TUESDAY"
+    WEDNESDAY = "WEDNESDAY"
+    THURSDAY = "THURSDAY"
+    FRIDAY = "FRIDAY"
+    SATURDAY = "SATURDAY"
+    SUNDAY = "SUNDAY"

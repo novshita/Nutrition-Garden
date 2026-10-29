@@ -14,6 +14,7 @@ from app.api.v1 import (
     sleep,
     water,
     weight,
+    workouts,
 )
 
 api_router = APIRouter()
@@ -30,3 +31,4 @@ api_router.include_router(activity.router)
 api_router.include_router(food_log.router)
 api_router.include_router(food.router)
 api_router.include_router(nutrition.router)
+api_router.include_router(workouts.router)
