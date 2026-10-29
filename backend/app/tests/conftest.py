@@ -63,3 +63,15 @@ def client(db):
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def usda(client):
+    """Fake USDA client injected into the API (no network)."""
+    from app.main import app
+    from app.services.nutrition.usda_client import get_usda_client
+    from app.tests.fakes import FakeUsda
+
+    fake = FakeUsda()
+    app.dependency_overrides[get_usda_client] = lambda: fake
+    return fake

@@ -45,3 +45,25 @@ class Mood(str, Enum):
     OKAY = "OKAY"
     LOW = "LOW"
     ROUGH = "ROUGH"
+
+
+class MealType(str, Enum):
+    BREAKFAST = "BREAKFAST"
+    LUNCH = "LUNCH"
+    DINNER = "DINNER"
+    SNACK = "SNACK"
+
+
+class FoodSource(str, Enum):
+    """Where a logged item's nutrition came from (engineering spec §18)."""
+
+    USDA = "USDA"
+    CUSTOM = "CUSTOM"
+    AI_INTERPRETED = "AI_INTERPRETED"
+
+
+class LogSource(str, Enum):
+    """How a food log was created."""
+
+    MANUAL = "MANUAL"
+    AI_INTERPRETED = "AI_INTERPRETED"
