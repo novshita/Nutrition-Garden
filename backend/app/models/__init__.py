@@ -3,6 +3,13 @@ from app.models.food import FoodLog, FoodLogItem
 from app.models.goals import CalorieTarget
 from app.models.nutrition import UsdaFoodCache
 from app.models.user import AuthSession, User, UserProfile, WeightLog
+from app.models.workouts import (
+    WorkoutExercise,
+    WorkoutSchedule,
+    WorkoutSession,
+    WorkoutSet,
+    WorkoutTemplate,
+)
 
 __all__ = [
     "AuthSession",
@@ -17,4 +24,9 @@ __all__ = [
     "UserProfile",
     "WaterLog",
     "WeightLog",
+    "WorkoutExercise",
+    "WorkoutSchedule",
+    "WorkoutSession",
+    "WorkoutSet",
+    "WorkoutTemplate",
 ]

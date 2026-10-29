@@ -46,6 +46,22 @@ USDA_BASE_URL = "https://api.nal.usda.gov/fdc/v1"
 USDA_TIMEOUT_SECONDS = 10.0
 USDA_CACHE_TTL_DAYS = 30
 
+# Workout calorie estimates are informational only and never change the food target (spec §23, §30).
+# Rough MET values for bodyweight/home exercise, adapted from the Compendium of Physical Activities.
+# kcal = MET x body weight (kg) x hours.
+WORKOUT_MET_BY_CATEGORY: dict[str, float] = {
+    "UPPER_BODY": 3.8,
+    "LOWER_BODY": 3.8,
+    "CORE": 3.8,
+    "FULL_BODY": 5.0,
+    "CARDIO": 6.0,
+    "HIIT": 8.0,
+    "MOBILITY": 2.3,
+    "STRETCHING": 2.3,
+    "YOGA": 2.5,
+}
+MAX_WORKOUT_SESSION_SECONDS = 6 * 60 * 60
+
 # Engineering spec §12: initial default target is TDEE + 250 kcal/day.
 INITIAL_SURPLUS_KCAL = 250
 
