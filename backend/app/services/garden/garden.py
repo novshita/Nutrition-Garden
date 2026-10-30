@@ -239,3 +239,14 @@ def list_milestones(db: Session, user: User) -> list[MilestoneOut]:
         for m in rows
     ]
 
+
+
+def get_day_growth(db: Session, user: User, day: date) -> tuple[int, list[GrowthAction]]:
+    """Points and actions that earned growth on a local day."""
+    garden = ensure_garden(db, user)
+    rows = db.execute(
+        select(GardenGrowthEvent.action, GardenGrowthEvent.points)
+        .where(GardenGrowthEvent.garden_id == garden.id, GardenGrowthEvent.event_date == day)
+        .order_by(GardenGrowthEvent.created_at.asc())
+    ).all()
+    return sum(r.points for r in rows), [r.action for r in rows]
