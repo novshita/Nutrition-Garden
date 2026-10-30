@@ -23,3 +23,8 @@ def local_day_bounds(day: date, tz: ZoneInfo) -> tuple[datetime, datetime]:
     """[start, end) of a local calendar day."""
     start = datetime.combine(day, datetime.min.time(), tz)
     return start, datetime.combine(day + timedelta(days=1), datetime.min.time(), tz)
+
+
+def local_date_of(db: Session, user: User, moment: datetime) -> date:
+    """The user's local calendar date for a timestamp."""
+    return moment.astimezone(get_timezone(db, user)).date()
