@@ -9,7 +9,8 @@ from datetime import UTC, date, datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.enums import FoodSource, LogSource
+from app.config import CALORIE_TARGET_MET_RATIO
+from app.enums import FoodSource, GrowthAction, LogSource
 from app.models import FoodLog, FoodLogItem, User
 from app.schemas.food_log import (
     CustomItemIn,
@@ -20,11 +21,13 @@ from app.schemas.food_log import (
     UsdaItemIn,
 )
 from app.schemas.nutrition import Micronutrient
+from app.services import goals
 from app.services.calculations import nutrition as calc
 from app.services.errors import NotFoundError
+from app.services.garden import garden as garden_service
 from app.services.nutrition import food_service
 from app.services.nutrition.usda_client import UsdaClient
-from app.services.timezone import get_timezone, local_day_bounds
+from app.services.timezone import get_timezone, local_date_of, local_day_bounds
 
 GRAMS = "g"
 
@@ -98,7 +101,22 @@ def create_food_log(
     )
     db.add(log)
     db.flush()
+    _record_growth(db, user, log)
     return log
+
+
+def _record_growth(db: Session, user: User, log: FoodLog) -> None:
+    day = local_date_of(db, user, log.consumed_at)
+    garden_service.record(db, user, GrowthAction.FOOD_LOGGED, day)
+    totals = daily_totals(list_logs_for_day(db, user, day))
+    _, day_end = local_day_bounds(day, get_timezone(db, user))
+    target = goals.get_target_at(db, user, day_end)
+    if (
+        target is not None
+        and totals.calories is not None
+        and totals.calories >= CALORIE_TARGET_MET_RATIO * target.target_kcal
+    ):
+        garden_service.record(db, user, GrowthAction.CALORIE_TARGET_MET, day)
 
 
 def list_logs_for_day(db: Session, user: User, day: date) -> list[FoodLog]:

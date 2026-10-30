@@ -6,6 +6,7 @@ from app.api.v1 import (
     bmi,
     food,
     food_log,
+    garden,
     goals,
     health,
     mood,
@@ -32,3 +33,4 @@ api_router.include_router(food_log.router)
 api_router.include_router(food.router)
 api_router.include_router(nutrition.router)
 api_router.include_router(workouts.router)
+api_router.include_router(garden.router)

@@ -62,6 +62,36 @@ WORKOUT_MET_BY_CATEGORY: dict[str, float] = {
 }
 MAX_WORKOUT_SESSION_SECONDS = 6 * 60 * 60
 
+# Garden growth (spec §38-40). Everything here is configuration, not UI logic.
+# A given action earns its points at most once per local day, and points never decrease (§39).
+GROWTH_POINTS_PER_ACTION = 1
+GROWTH_STAGE_THRESHOLDS = (0, 50, 150, 300, 500)  # stage 1..5 (spec §40)
+CALORIE_TARGET_MET_RATIO = 0.9  # "reasonably met": at least 90% of the target; going over is fine
+FIRST_WEEK_ACTIVE_DAYS = 7
+WORKOUT_DAY_MILESTONES = (3, 7, 14, 30)  # days with a completed workout (not consecutive)
+HYDRATION_DAY_MILESTONES = (7, 30)  # days with water logged
+WEIGHT_PROGRESS_MILESTONES_PERCENT = (25, 50, 75, 100)  # of the way from first weight to goal
+DEFAULT_GARDEN_NAME = "My Nutrition Garden"
+
+# (unlock stage, item_type, item_key). Art for each key is a frontend/design decision.
+GARDEN_ITEM_CATALOG: tuple[tuple[int, str, str], ...] = (
+    (1, "FLOWER", "tulip"),
+    (1, "FLOWER", "daisy"),
+    (1, "HABITAT", "bunny_burrow"),
+    (2, "FLOWER", "sunflower"),
+    (2, "PATH", "stepping_stones"),
+    (2, "DECORATION", "lantern"),
+    (3, "TREE", "apple_tree"),
+    (3, "DECORATION", "pond"),
+    (3, "MAGICAL", "butterflies"),
+    (4, "TREE", "cherry_blossom_tree"),
+    (4, "DECORATION", "arch_gate"),
+    (4, "MAGICAL", "fairy_lights"),
+    (5, "MAGICAL", "rainbow"),
+    (5, "DECORATION", "crystal_fountain"),
+    (5, "SEASONAL", "moon_garden"),
+)
+
 # Engineering spec §12: initial default target is TDEE + 250 kcal/day.
 INITIAL_SURPLUS_KCAL = 250
 

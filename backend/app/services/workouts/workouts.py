@@ -6,7 +6,7 @@ from datetime import UTC, date
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.enums import Weekday
+from app.enums import GrowthAction, Weekday
 from app.models import (
     User,
     WorkoutExercise,
@@ -25,7 +25,8 @@ from app.schemas.workouts import (
 from app.services import weight as weight_service
 from app.services.calculations.workouts import estimate_calories
 from app.services.errors import NotFoundError
-from app.services.timezone import get_timezone, local_day_bounds
+from app.services.garden import garden as garden_service
+from app.services.timezone import get_timezone, local_date_of, local_day_bounds
 
 WEEKDAYS = list(Weekday)  # Monday first
 
@@ -169,6 +170,9 @@ def create_session(db: Session, user: User, data: SessionCreate) -> WorkoutSessi
     )
     db.add(session)
     db.flush()
+    garden_service.record(
+        db, user, GrowthAction.WORKOUT_COMPLETED, local_date_of(db, user, session.started_at)
+    )
     return session
 
 

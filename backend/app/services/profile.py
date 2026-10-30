@@ -6,12 +6,13 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.enums import CalorieTargetSource, GoalType
+from app.enums import CalorieTargetSource, GoalType, GrowthAction
 from app.models import User, UserProfile, WeightLog
 from app.schemas.profile import ProfileCreate, ProfileResponse, ProfileSummary
 from app.services import goals
 from app.services import weight as weight_service
 from app.services.calculations import body
+from app.services.garden import garden as garden_service
 
 
 class ProfileExistsError(Exception):
@@ -37,6 +38,12 @@ def create_profile(db: Session, user: User, data: ProfileCreate) -> ProfileSumma
     db.add(WeightLog(user_id=user.id, recorded_at=datetime.now(UTC), weight_kg=data.weight_kg))
     db.flush()
 
+    garden_service.record(
+        db,
+        user,
+        GrowthAction.WEIGHT_LOGGED,
+        datetime.now(ZoneInfo(data.timezone)).date(),
+    )
     summary = _build_summary(profile, data.weight_kg)
     goals.set_target(
         db,

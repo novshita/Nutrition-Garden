@@ -4,11 +4,13 @@ from datetime import UTC, date, datetime, timedelta
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.enums import GrowthAction
 from app.models import User, WeightLog
 from app.schemas.weight import RollingPoint, TrendResponse
 from app.services.calculations import weight_trend
 from app.services.errors import ConflictError, NotFoundError
-from app.services.timezone import get_timezone
+from app.services.garden import garden as garden_service
+from app.services.timezone import get_timezone, local_date_of
 
 
 def add_weight(
@@ -22,6 +24,9 @@ def add_weight(
     )
     db.add(log)
     db.flush()
+    garden_service.record(
+        db, user, GrowthAction.WEIGHT_LOGGED, local_date_of(db, user, log.recorded_at)
+    )
     return log
 
 

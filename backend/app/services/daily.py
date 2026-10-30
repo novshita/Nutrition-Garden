@@ -7,10 +7,12 @@ from typing import TypeVar
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.enums import GrowthAction
 from app.models import DailyActivity, MoodLog, SleepLog, User, WaterLog
 from app.schemas.daily import MoodUpdate, SleepUpdate, WaterDay
 from app.services.errors import NotFoundError
-from app.services.timezone import get_timezone, local_day_bounds
+from app.services.garden import garden as garden_service
+from app.services.timezone import get_timezone, local_date_of, local_day_bounds
 
 T = TypeVar("T")
 
@@ -48,6 +50,10 @@ def add_water(db: Session, user: User, amount_ml: int, consumed_at: datetime | N
     )
     db.add(log)
     db.flush()
+    if amount_ml > 0:
+        garden_service.record(
+            db, user, GrowthAction.WATER_LOGGED, local_date_of(db, user, log.consumed_at)
+        )
     return log
 
 
@@ -86,6 +92,7 @@ def set_steps(db: Session, user: User, day: date, steps: int) -> DailyActivity:
     else:
         row.steps = steps
     db.flush()
+    garden_service.record(db, user, GrowthAction.STEPS_LOGGED, day)
     return row
 
 
@@ -108,6 +115,7 @@ def set_mood(db: Session, user: User, day: date, data: MoodUpdate) -> MoodLog:
     else:
         row.mood, row.note = data.mood, data.note
     db.flush()
+    garden_service.record(db, user, GrowthAction.MOOD_LOGGED, day)
     return row
 
 
@@ -133,6 +141,7 @@ def set_sleep(db: Session, user: User, day: date, data: SleepUpdate) -> SleepLog
     row.quality = data.quality
     row.notes = data.notes
     db.flush()
+    garden_service.record(db, user, GrowthAction.SLEEP_LOGGED, day)
     return row
 
 
