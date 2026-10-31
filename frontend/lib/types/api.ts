@@ -180,3 +180,18 @@ export type DailyNutrition = {
   calorie_target_kcal: number | null;
   calories_remaining: number | null;
 };
+
+export type WaterEntry = { id: string; consumed_at: string; amount_ml: number };
+export type WaterDay = { date: string; total_ml: number; entries: WaterEntry[] };
+
+export type SleepLog = {
+  sleep_date: string;
+  bedtime: string | null;
+  wake_time: string | null;
+  duration_minutes: number;
+  quality: number | null;
+  notes: string | null;
+};
+
+export type MoodLog = { date: string; mood: Mood; note: string | null };
+export type StepsLog = { date: string; steps: number };
