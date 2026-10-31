@@ -1,28 +1,22 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { AppHeader } from "@/components/app-header";
 import { CaloriesCard } from "@/components/dashboard/calories-card";
 import { DayTiles } from "@/components/dashboard/day-tiles";
 import { WorkoutCard } from "@/components/dashboard/workout-card";
 import { GardenCard } from "@/components/garden/garden-card";
 import { useApi } from "@/hooks/use-api";
+import { useProfile } from "@/hooks/use-profile";
 import { useSession } from "@/hooks/use-session";
 import { formatLongDate } from "@/lib/format";
-import type { DayOverview, Garden, ProfileSummary } from "@/lib/types/api";
+import type { DayOverview, Garden } from "@/lib/types/api";
 
 export default function HomePage() {
-  const router = useRouter();
   const { user, loading, error, signOut } = useSession();
-  const profile = useApi<ProfileSummary>(user ? "/profile" : null);
+  const profile = useProfile(user !== null);
   const ready = profile.data !== null;
   const dashboard = useApi<DayOverview>(ready ? "/dashboard/today" : null);
   const garden = useApi<Garden>(ready ? "/garden" : null);
-
-  useEffect(() => {
-    if (profile.error?.status === 404) router.replace("/onboarding"); // not set up yet
-  }, [profile.error, router]);
 
   if (loading || (!user && error?.status === 401)) {
     return <p className="m-auto text-muted-foreground">Opening your garden…</p>;

@@ -107,3 +107,76 @@ export type DayOverview = {
     actions: GrowthAction[];
   };
 };
+
+export type MealType = "BREAKFAST" | "LUNCH" | "DINNER" | "SNACK";
+
+export type Micronutrient = { amount: number; unit: string };
+
+/** Nutrition per 100 g from USDA. null means unknown, never zero. */
+export type NutritionPer100g = {
+  calories: number | null;
+  protein_g: number | null;
+  carbohydrate_g: number | null;
+  fat_g: number | null;
+  fiber_g: number | null;
+  micronutrients: Record<string, Micronutrient>;
+};
+
+export type Portion = { description: string; gram_weight: number };
+
+export type FoodItem = {
+  fdc_id: number;
+  name: string;
+  data_type: string;
+  brand: string | null;
+  portions: Portion[];
+  nutrition_per_100g: NutritionPer100g;
+};
+
+export type FoodSearchResponse = {
+  query: string;
+  page: number;
+  total_hits: number;
+  total_pages: number;
+  results: FoodItem[];
+  /** "cache" means USDA couldn't be reached and only previously used foods are listed. */
+  source: "usda" | "cache";
+};
+
+export type FoodDetailResponse = { food: FoodItem; source: "usda" | "cache"; stale: boolean };
+
+export type FoodLogItem = {
+  id: string;
+  food_source: "USDA" | "CUSTOM" | "AI_INTERPRETED";
+  external_food_id: string | null;
+  food_name: string;
+  quantity: number;
+  unit: string;
+  serving_size: number | null;
+  calories: number | null;
+  protein_g: number | null;
+  carbohydrate_g: number | null;
+  fat_g: number | null;
+  fiber_g: number | null;
+  micronutrients: Record<string, Micronutrient>;
+  confidence: number | null;
+};
+
+export type FoodLog = {
+  id: string;
+  consumed_at: string;
+  meal_type: MealType;
+  source: "MANUAL" | "AI_INTERPRETED";
+  notes: string | null;
+  items: FoodLogItem[];
+  totals: NutritionTotals;
+};
+
+export type FoodLogDay = { date: string; logs: FoodLog[] };
+
+export type DailyNutrition = {
+  date: string;
+  totals: NutritionTotals;
+  calorie_target_kcal: number | null;
+  calories_remaining: number | null;
+};
