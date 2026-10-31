@@ -50,3 +50,9 @@ export function formatLongDate(isoDate: string): string {
     day: "numeric",
   });
 }
+
+/** "Mar 10" from a YYYY-MM-DD string, without any time zone shifting. */
+export function formatShortDate(isoDate: string): string {
+  const [year, month, day] = isoDate.split("-").map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
