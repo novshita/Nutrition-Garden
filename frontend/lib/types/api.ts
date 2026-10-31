@@ -195,3 +195,26 @@ export type SleepLog = {
 
 export type MoodLog = { date: string; mood: Mood; note: string | null };
 export type StepsLog = { date: string; steps: number };
+
+export type WeightEntry = { id: string; recorded_at: string; weight_kg: number; note: string | null };
+
+export type TrendState =
+  | "INSUFFICIENT_DATA"
+  | "STABLE"
+  | "INCREASING"
+  | "DECREASING"
+  | "INCREASING_FAST"
+  | "DECREASING_FAST";
+
+export type WeightTrend = {
+  state: TrendState;
+  current_average_kg: number | null;
+  previous_average_kg: number | null;
+  weekly_change_kg: number | null;
+  days_with_data: number;
+  /** 7-day rolling average for each day with a weigh-in. */
+  series: { date: string; average_kg: number }[];
+};
+
+/** Informational only; never a diagnosis (product spec §8). */
+export type Bmi = { bmi: number; weight_kg: number; height_cm: number };

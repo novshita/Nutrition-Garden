@@ -3,6 +3,7 @@ import {
   formatDuration,
   formatInt,
   formatLongDate,
+  formatShortDate,
   formatSeconds,
   formatVolume,
   formatWeight,
@@ -95,5 +96,12 @@ describe("formatLongDate", () => {
   it("shows the weekday and date for the exact day given", () => {
     expect(formatLongDate("2026-10-31")).toBe("Saturday, October 31");
     expect(formatLongDate("2026-01-01")).toBe("Thursday, January 1");
+  });
+});
+
+describe("formatShortDate", () => {
+  it("shows the month and day for the exact day given", () => {
+    expect(formatShortDate("2026-03-10")).toBe("Mar 10");
+    expect(formatShortDate("2026-12-01")).toBe("Dec 1");
   });
 });

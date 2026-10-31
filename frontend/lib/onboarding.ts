@@ -100,7 +100,7 @@ function weightKgFromText(text: string, unitSystem: UnitSystem): number | null {
   return unitSystem === "METRIC" ? value : lbToKg(value);
 }
 
-function weightRangeText(unitSystem: UnitSystem): string {
+export function weightRangeText(unitSystem: UnitSystem): string {
   const { min, max } = LIMITS.weightKg;
   return unitSystem === "METRIC"
     ? `${min} and ${max} kg`
