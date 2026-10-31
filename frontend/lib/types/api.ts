@@ -218,3 +218,122 @@ export type WeightTrend = {
 
 /** Informational only; never a diagnosis (product spec §8). */
 export type Bmi = { bmi: number; weight_kg: number; height_cm: number };
+
+export type Difficulty = "BEGINNER" | "INTERMEDIATE" | "ADVANCED" | "CUSTOM";
+export type ExerciseType = "REPS" | "TIME" | "COMBINED";
+export type ExerciseCategory =
+  | "UPPER_BODY"
+  | "LOWER_BODY"
+  | "CORE"
+  | "FULL_BODY"
+  | "CARDIO"
+  | "HIIT"
+  | "MOBILITY"
+  | "STRETCHING"
+  | "YOGA";
+
+export type WorkoutExercise = {
+  id: string;
+  exercise_name: string;
+  exercise_type: ExerciseType;
+  category: ExerciseCategory;
+  order_index: number;
+  default_sets: number;
+  default_reps: number | null;
+  default_duration_seconds: number | null;
+  rest_seconds: number;
+};
+
+export type WorkoutTemplate = {
+  id: string;
+  name: string;
+  description: string | null;
+  difficulty: Difficulty;
+  exercises: WorkoutExercise[];
+};
+
+export type ScheduleDay = {
+  weekday: Weekday;
+  is_rest_day: boolean;
+  template_id: string | null;
+  template_name: string | null;
+};
+
+export type WorkoutSession = {
+  id: string;
+  template_id: string | null;
+  template_name: string | null;
+  started_at: string;
+  completed_at: string | null;
+  duration_seconds: number;
+  /** A rough estimate for information only; it never changes the food goal. */
+  estimated_calories: number | null;
+  notes: string | null;
+  sets: {
+    exercise_id: string | null;
+    set_number: number;
+    repetitions: number | null;
+    duration_seconds: number | null;
+    completed: boolean;
+  }[];
+};
+
+export type GardenItem = {
+  id: string;
+  item_type: string;
+  item_key: string;
+  placed: boolean;
+  position: { x: number; y: number } | null;
+  rotation: number | null;
+  unlocked_at: string;
+};
+
+export type MilestoneType =
+  | "FIRST_LOG"
+  | "FIRST_WEEK"
+  | "WORKOUT_STREAK"
+  | "HYDRATION_MILESTONE"
+  | "WEIGHT_MILESTONE"
+  | "GARDEN_STAGE";
+
+export type Milestone = { milestone_type: MilestoneType; trigger_value: number; unlocked_at: string };
+
+export type CalendarDay = {
+  date: string;
+  planned_workout: { is_rest_day: boolean; template_name: string | null } | null;
+  workouts_completed: number;
+  calories: number | null;
+  food_items_logged: number;
+  weight_kg: number | null;
+  water_ml: number;
+  sleep_minutes: number | null;
+  mood: Mood | null;
+  steps: number | null;
+  has_activity: boolean;
+};
+
+export type CalorieTargetSource = "INITIAL_ESTIMATE" | "USER_ADJUSTED" | "ACCEPTED_SUGGESTION";
+
+export type CalorieTarget = {
+  target_kcal: number;
+  source: CalorieTargetSource;
+  reason: string | null;
+  effective_from: string;
+  effective_until: string | null;
+};
+
+export type CalorieTargetHistory = { current: CalorieTarget | null; history: CalorieTarget[] };
+
+/** A suggestion to review the goal. It is only ever applied when the person accepts it. */
+export type CalorieSuggestion = {
+  status: "INSUFFICIENT_DATA" | "NO_CHANGE_SUGGESTED" | "REVIEW_SUGGESTED";
+  reason: "STABLE_WEIGHT" | "WEIGHT_RISING_FAST" | null;
+  trend_state: TrendState;
+  weekly_change_kg: number | null;
+  evaluated_from: string;
+  evaluated_to: string;
+  weigh_in_days: number;
+  current_target_kcal: number;
+  suggested_target_kcal: number | null;
+  days_until_evaluation: number | null;
+};
