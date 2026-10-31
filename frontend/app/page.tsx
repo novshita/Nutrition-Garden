@@ -1,21 +1,32 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { GardenCard } from "@/components/garden/garden-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useApi } from "@/hooks/use-api";
 import { useSession } from "@/hooks/use-session";
-import type { Garden } from "@/lib/types/api";
+import type { Garden, ProfileSummary } from "@/lib/types/api";
 
 export default function HomePage() {
+  const router = useRouter();
   const { user, loading, error, signOut } = useSession();
   const garden = useApi<Garden>(user ? "/garden" : null);
+  const profile = useApi<ProfileSummary>(user ? "/profile" : null);
+
+  useEffect(() => {
+    if (profile.error?.status === 404) router.replace("/onboarding"); // not set up yet
+  }, [profile.error, router]);
 
   if (loading || (!user && error?.status === 401)) {
     return <p className="m-auto text-muted-foreground">Opening your garden…</p>;
   }
   if (!user) {
     return <p className="m-auto text-destructive">{error?.message ?? "Something went wrong."}</p>;
+  }
+  if (profile.loading || profile.error?.status === 404) {
+    return <p className="m-auto text-muted-foreground">Opening your garden…</p>;
   }
 
   return (
@@ -37,18 +48,21 @@ export default function HomePage() {
         </p>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Let&apos;s get to know you</CardTitle>
-          <CardDescription>
-            Soon you&apos;ll be able to tell us a little about yourself here and get your personal
-            calorie estimate. For now, your garden is ready and waiting.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          Signed in as {user.email}
-        </CardContent>
-      </Card>
+      {profile.data && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Your daily estimate</CardTitle>
+            <CardDescription>
+              About {profile.data.calorie_target_kcal} kcal a day for gradual gain, an estimate and
+              not medical advice.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-sm text-muted-foreground">
+            Current weight {profile.data.current_weight_kg} kg · BMI {profile.data.bmi.toFixed(1)} ·
+            signed in as {user.email}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
