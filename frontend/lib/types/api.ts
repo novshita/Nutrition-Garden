@@ -26,3 +26,28 @@ export type Garden = {
   points_to_next_stage: number | null;
   today_actions: GrowthAction[];
 };
+
+export type Sex = "MALE" | "FEMALE";
+export type UnitSystem = "METRIC" | "IMPERIAL";
+export type ActivityLevel = "SEDENTARY" | "LIGHT" | "MODERATE" | "VERY_ACTIVE" | "EXTRA_ACTIVE";
+
+export type Profile = {
+  date_of_birth: string;
+  sex: Sex;
+  height_cm: number;
+  preferred_unit_system: UnitSystem;
+  activity_level: ActivityLevel;
+  goal_type: "GAIN_WEIGHT";
+  goal_weight_kg: number;
+  timezone: string;
+};
+
+/** The profile plus values the backend calculates. BMI is informational only (product spec §8). */
+export type ProfileSummary = {
+  profile: Profile;
+  current_weight_kg: number;
+  bmi: number;
+  bmr_kcal: number;
+  tdee_kcal: number;
+  calorie_target_kcal: number;
+};
