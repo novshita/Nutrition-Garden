@@ -28,6 +28,7 @@ class GoalType(str, Enum):
 class CalorieTargetSource(str, Enum):
     INITIAL_ESTIMATE = "INITIAL_ESTIMATE"
     USER_ADJUSTED = "USER_ADJUSTED"
+    ACCEPTED_SUGGESTION = "ACCEPTED_SUGGESTION"
 
 
 class TrendState(str, Enum):
@@ -124,3 +125,14 @@ class MilestoneType(str, Enum):
     HYDRATION_MILESTONE = "HYDRATION_MILESTONE"
     WEIGHT_MILESTONE = "WEIGHT_MILESTONE"
     GARDEN_STAGE = "GARDEN_STAGE"
+
+
+class SuggestionStatus(str, Enum):
+    INSUFFICIENT_DATA = "INSUFFICIENT_DATA"
+    NO_CHANGE_SUGGESTED = "NO_CHANGE_SUGGESTED"
+    REVIEW_SUGGESTED = "REVIEW_SUGGESTED"
+
+
+class SuggestionReason(str, Enum):
+    STABLE_WEIGHT = "STABLE_WEIGHT"
+    WEIGHT_RISING_FAST = "WEIGHT_RISING_FAST"

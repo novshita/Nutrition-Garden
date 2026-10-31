@@ -62,6 +62,12 @@ WORKOUT_MET_BY_CATEGORY: dict[str, float] = {
 }
 MAX_WORKOUT_SESSION_SECONDS = 6 * 60 * 60
 
+# Adaptive calorie suggestions (spec §12, §14). Suggestions are never applied automatically.
+ADAPTIVE_WINDOW_DAYS = 28  # look at about 4 weeks of weight data
+ADAPTIVE_MIN_DAYS = 21  # and never judge on less than 3 weeks since the last target change
+ADAPTIVE_MIN_WEIGH_INS_PER_END_WINDOW = 2  # distinct days with a weigh-in at each end
+ADAPTIVE_INCREASE_KCAL = 100
+
 # Garden growth (spec §38-40). Everything here is configuration, not UI logic.
 # A given action earns its points at most once per local day, and points never decrease (§39).
 GROWTH_POINTS_PER_ACTION = 1

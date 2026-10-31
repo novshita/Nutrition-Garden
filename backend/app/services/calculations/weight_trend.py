@@ -50,6 +50,17 @@ def rolling_average_series(daily: dict[date, float]) -> list[tuple[date, float]]
     return series
 
 
+def classify_change(weekly_change_kg: float) -> TrendState:
+    """Name a weekly weight change using the configurable thresholds (spec §15)."""
+    magnitude = abs(weekly_change_kg)
+    if magnitude < TREND_STABLE_THRESHOLD_KG_PER_WEEK:
+        return TrendState.STABLE
+    fast = magnitude >= TREND_FAST_THRESHOLD_KG_PER_WEEK
+    if weekly_change_kg > 0:
+        return TrendState.INCREASING_FAST if fast else TrendState.INCREASING
+    return TrendState.DECREASING_FAST if fast else TrendState.DECREASING
+
+
 def compute_trend(daily: dict[date, float], today: date) -> TrendResult:
     """Compare the 7 days ending today with the 7 days before that."""
     current, current_days = _window_average(daily, today)
@@ -60,13 +71,5 @@ def compute_trend(daily: dict[date, float], today: date) -> TrendResult:
         return TrendResult(TrendState.INSUFFICIENT_DATA, current, previous, None, days_with_data)
 
     change = current - previous
-    magnitude = abs(change)
-    if magnitude < TREND_STABLE_THRESHOLD_KG_PER_WEEK:
-        state = TrendState.STABLE
-    elif change > 0:
-        fast = magnitude >= TREND_FAST_THRESHOLD_KG_PER_WEEK
-        state = TrendState.INCREASING_FAST if fast else TrendState.INCREASING
-    else:
-        fast = magnitude >= TREND_FAST_THRESHOLD_KG_PER_WEEK
-        state = TrendState.DECREASING_FAST if fast else TrendState.DECREASING
+    state = classify_change(change)
     return TrendResult(state, current, previous, change, days_with_data)
