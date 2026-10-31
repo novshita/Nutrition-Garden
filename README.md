@@ -35,7 +35,7 @@ Nutrition-Garden/
 ├── engineering-spec.md
 ├── .env.example
 ├── backend/     # FastAPI app (see engineering-spec §70)
-└── frontend/    # Next.js app (not created yet)
+└── frontend/    # Next.js app
 ```
 
 ## Getting started
@@ -58,14 +58,30 @@ Never commit `.env`. Required variables: `OPENAI_API_KEY`, `USDA_API_KEY`, `DATA
 
 ```bash
 cd backend
-python3.11 -m venv .venv      # already created in this checkout
-source .venv/bin/activate
-pip install -e ".[dev]"       # once backend/pyproject.toml exists
+source .venv/bin/activate        # python3.11 -m venv .venv if you don't have one yet
+pip install -e ".[dev]"
+createdb nutrition_garden && createdb nutrition_garden_test
+alembic upgrade head             # create the tables
+uvicorn app.main:app --reload    # http://127.0.0.1:8000  (API docs at /docs)
+pytest                           # tests use the nutrition_garden_test database
 ```
 
 ### Frontend
 
-Not scaffolded yet.
+```bash
+cd frontend
+npm install
+npm run dev                      # http://localhost:3000
+npm test                         # unit tests
+npm run typecheck && npm run lint
+```
+
+The browser only talks to the Next.js server. Requests to `/api/v1/*` are forwarded to the backend
+(`BACKEND_URL`, default `http://127.0.0.1:8000`), so the session cookie stays same-origin and no
+CORS setup is needed. Start the backend first.
+
+If `npm install` fails with `EACCES` on `~/.npm`, your npm cache has root-owned files from an old npm
+bug. Fix it once with `sudo chown -R "$(id -u):$(id -g)" ~/.npm`.
 
 ## Ground rules
 
@@ -78,4 +94,4 @@ Not scaffolded yet.
 
 ## Status
 
-Project setup. Backend first, then frontend.
+Backend is largely complete (everything except the AI layer). Frontend has started: login, registration and a first garden view.
