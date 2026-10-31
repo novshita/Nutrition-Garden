@@ -7,9 +7,13 @@
 export const KG_PER_LB = 0.45359237;
 export const CM_PER_INCH = 2.54;
 export const INCHES_PER_FOOT = 12;
+export const ML_PER_US_FL_OZ = 29.5735295625;
 
 export const kgToLb = (kg: number): number => kg / KG_PER_LB;
 export const lbToKg = (lb: number): number => lb * KG_PER_LB;
+
+export const mlToFlOz = (ml: number): number => ml / ML_PER_US_FL_OZ;
+export const flOzToMl = (flOz: number): number => flOz * ML_PER_US_FL_OZ;
 
 export const ftInToCm = (feet: number, inches = 0): number =>
   (feet * INCHES_PER_FOOT + inches) * CM_PER_INCH;
