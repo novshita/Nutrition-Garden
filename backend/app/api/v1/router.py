@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from app.api.v1 import (
     activity,
+    ai,
     auth,
     bmi,
     calendar,
@@ -11,6 +12,7 @@ from app.api.v1 import (
     garden,
     goals,
     health,
+    memory,
     mood,
     nutrition,
     profile,
@@ -38,3 +40,5 @@ api_router.include_router(workouts.router)
 api_router.include_router(garden.router)
 api_router.include_router(dashboard.router)
 api_router.include_router(calendar.router)
+api_router.include_router(ai.router)
+api_router.include_router(memory.router)

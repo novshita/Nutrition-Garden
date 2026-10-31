@@ -1,3 +1,4 @@
+from app.models.ai import AiMemory, AiUsage, FairyNudge
 from app.models.daily import DailyActivity, MoodLog, SleepLog, WaterLog
 from app.models.food import FoodLog, FoodLogItem
 from app.models.garden import (
@@ -19,9 +20,12 @@ from app.models.workouts import (
 )
 
 __all__ = [
+    "AiMemory",
+    "AiUsage",
     "AuthSession",
     "CalorieTarget",
     "DailyActivity",
+    "FairyNudge",
     "FoodLog",
     "FoodLogItem",
     "Garden",

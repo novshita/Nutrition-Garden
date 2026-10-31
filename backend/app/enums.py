@@ -136,3 +136,24 @@ class SuggestionStatus(str, Enum):
 class SuggestionReason(str, Enum):
     STABLE_WEIGHT = "STABLE_WEIGHT"
     WEIGHT_RISING_FAST = "WEIGHT_RISING_FAST"
+
+
+class MemoryCategory(str, Enum):
+    """What kind of lasting preference a memory is (product spec §41 examples)."""
+
+    FOOD_LIKE = "FOOD_LIKE"
+    FOOD_DISLIKE = "FOOD_DISLIKE"
+    MEAL_PREFERENCE = "MEAL_PREFERENCE"
+    ROUTINE = "ROUTINE"
+    OTHER = "OTHER"
+
+
+class MemoryStatus(str, Enum):
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+    ARCHIVED = "ARCHIVED"
+
+
+class NudgeKind(str, Enum):
+    LOW_INTAKE = "LOW_INTAKE"

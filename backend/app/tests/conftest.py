@@ -75,3 +75,15 @@ def usda(client):
     fake = FakeUsda()
     app.dependency_overrides[get_usda_client] = lambda: fake
     return fake
+
+
+@pytest.fixture
+def ai(client):
+    """Fake AI client injected into the API (no network, no OpenAI)."""
+    from app.main import app
+    from app.services.ai.client import get_ai_client
+    from app.tests.fakes import FakeAi
+
+    fake = FakeAi()
+    app.dependency_overrides[get_ai_client] = lambda: fake
+    return fake

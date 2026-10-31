@@ -22,3 +22,31 @@ class FakeUsda:
         if fdc_id not in self.foods:
             raise UsdaNotFoundError(str(fdc_id))
         return self.foods[fdc_id]
+
+
+class FakeAi:
+    """Stands in for OpenAI in tests. Set `outputs[SomeOutputModel]` to an instance, an exception to
+    raise, or a function of the input text. Every call is recorded in `calls`."""
+
+    def __init__(self):
+        self.outputs: dict = {}
+        self.calls: list[dict] = []
+
+    def parse(self, *, instructions, input_text, output_model):
+        from app.services.ai.client import AiUnavailableError
+
+        self.calls.append(
+            {"instructions": instructions, "input": input_text, "model": output_model}
+        )
+        out = self.outputs.get(output_model)
+        if isinstance(out, Exception):
+            raise out
+        if callable(out):
+            out = out(input_text)
+        if out is None:
+            raise AiUnavailableError("no fake output configured")
+        return out
+
+    @property
+    def last_input(self) -> str:
+        return self.calls[-1]["input"]

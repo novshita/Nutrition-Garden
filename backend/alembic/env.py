@@ -11,7 +11,8 @@ config = context.config
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    # Keep the app's own loggers alive when migrations run in-process (by default fileConfig mutes them).
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 import app.models  # noqa: F401  (registers models on Base.metadata)
 from app.config import get_settings

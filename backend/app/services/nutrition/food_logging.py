@@ -63,6 +63,7 @@ def _usda_item(db: Session, client: UsdaClient, data: UsdaItemIn, position: int)
         fat_g=scaled.fat_g,
         fiber_g=scaled.fiber_g,
         micronutrients_json={k: m.model_dump() for k, m in scaled.micronutrients.items()},
+        confidence=data.confidence,
     )
 
 
@@ -78,11 +79,16 @@ def _custom_item(data: CustomItemIn, position: int) -> FoodLogItem:
         carbohydrate_g=data.carbohydrate_g,
         fat_g=data.fat_g,
         fiber_g=data.fiber_g,
+        confidence=data.confidence,
     )
 
 
 def create_food_log(
-    db: Session, user: User, client: UsdaClient, data: FoodLogCreate
+    db: Session,
+    user: User,
+    client: UsdaClient,
+    data: FoodLogCreate,
+    source: LogSource = LogSource.MANUAL,
 ) -> FoodLog:
     """Build every item first so a failure on any item saves nothing."""
     items = [
@@ -95,7 +101,7 @@ def create_food_log(
         user_id=user.id,
         consumed_at=(data.consumed_at or datetime.now(UTC)).astimezone(UTC),
         meal_type=data.meal_type,
-        source=LogSource.MANUAL,
+        source=source,
         notes=data.notes,
         items=items,
     )
