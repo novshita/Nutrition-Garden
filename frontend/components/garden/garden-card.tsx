@@ -1,3 +1,4 @@
+import { ProgressBar } from "@/components/ui/progress-bar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Garden, GrowthAction } from "@/lib/types/api";
 
@@ -33,16 +34,7 @@ export function GardenCard({ garden }: { garden: Garden }) {
         <div className="flex items-center gap-4">
           <span aria-hidden className="text-6xl">🐰</span>
           <div className="flex-1">
-            <div
-              className="h-3 overflow-hidden rounded-full bg-secondary"
-              role="progressbar"
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={progress}
-              aria-label="Progress to the next garden stage"
-            >
-              <div className="h-full rounded-full bg-primary" style={{ width: `${progress}%` }} />
-            </div>
+            <ProgressBar value={progress} label="Progress to the next garden stage" />
             <p className="mt-2 text-sm text-muted-foreground">
               {points_to_next_stage === null
                 ? "Your garden is in full bloom."

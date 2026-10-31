@@ -2,18 +2,23 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { AppHeader } from "@/components/app-header";
+import { CaloriesCard } from "@/components/dashboard/calories-card";
+import { DayTiles } from "@/components/dashboard/day-tiles";
+import { WorkoutCard } from "@/components/dashboard/workout-card";
 import { GardenCard } from "@/components/garden/garden-card";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useApi } from "@/hooks/use-api";
 import { useSession } from "@/hooks/use-session";
-import type { Garden, ProfileSummary } from "@/lib/types/api";
+import { formatLongDate } from "@/lib/format";
+import type { DayOverview, Garden, ProfileSummary } from "@/lib/types/api";
 
 export default function HomePage() {
   const router = useRouter();
   const { user, loading, error, signOut } = useSession();
-  const garden = useApi<Garden>(user ? "/garden" : null);
   const profile = useApi<ProfileSummary>(user ? "/profile" : null);
+  const ready = profile.data !== null;
+  const dashboard = useApi<DayOverview>(ready ? "/dashboard/today" : null);
+  const garden = useApi<Garden>(ready ? "/garden" : null);
 
   useEffect(() => {
     if (profile.error?.status === 404) router.replace("/onboarding"); // not set up yet
@@ -25,43 +30,45 @@ export default function HomePage() {
   if (!user) {
     return <p className="m-auto text-destructive">{error?.message ?? "Something went wrong."}</p>;
   }
-  if (profile.loading || profile.error?.status === 404) {
+  if (profile.error && profile.error.status !== 404) {
+    return <p className="m-auto text-destructive">{profile.error.message}</p>;
+  }
+  if (!profile.data) {
     return <p className="m-auto text-muted-foreground">Opening your garden…</p>;
   }
 
+  const refresh = () => {
+    dashboard.reload();
+    garden.reload();
+  };
+  const day = dashboard.data;
+
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 p-4 sm:p-8">
-      <header className="flex items-center justify-between">
-        <p className="font-diary text-3xl text-primary">🌷 Nutrition Garden</p>
-        <Button variant="outline" onClick={signOut}>
-          Sign out
-        </Button>
-      </header>
+      <AppHeader onSignOut={signOut} />
 
-      <h1 className="font-diary text-4xl">Hello, {user.display_name}</h1>
+      <div>
+        <h1 className="font-diary text-4xl">Hello, {user.display_name}</h1>
+        {day && <p className="text-muted-foreground">{formatLongDate(day.date)}</p>}
+      </div>
 
-      {garden.data ? (
-        <GardenCard garden={garden.data} />
+      {garden.data && <GardenCard garden={garden.data} />}
+
+      {day ? (
+        <>
+          <CaloriesCard day={day} />
+          <DayTiles
+            day={day}
+            unit={profile.data.profile.preferred_unit_system}
+            currentWeightKg={profile.data.current_weight_kg}
+            onChange={refresh}
+          />
+          <WorkoutCard workout={day.workout} />
+        </>
       ) : (
         <p className="text-muted-foreground">
-          {garden.error ? garden.error.message : "Watering the garden…"}
+          {dashboard.error ? dashboard.error.message : "Gathering today…"}
         </p>
-      )}
-
-      {profile.data && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Your daily estimate</CardTitle>
-            <CardDescription>
-              About {profile.data.calorie_target_kcal} kcal a day for gradual gain, an estimate and
-              not medical advice.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            Current weight {profile.data.current_weight_kg} kg · BMI {profile.data.bmi.toFixed(1)} ·
-            signed in as {user.email}
-          </CardContent>
-        </Card>
       )}
     </div>
   );
