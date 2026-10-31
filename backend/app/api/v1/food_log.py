@@ -3,8 +3,11 @@ from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
+from sqlalchemy.orm import Session
 
 from app.api.deps import CurrentUser, DbSession
+from app.enums import LogSource
+from app.models import User
 from app.schemas.food_log import FoodLogCreate, FoodLogDay, FoodLogOut
 from app.services.errors import NotFoundError
 from app.services.nutrition import food_logging
@@ -22,10 +25,16 @@ router = APIRouter(prefix="/food/log", tags=["food-log"])
 Usda = Annotated[UsdaClient, Depends(get_usda_client)]
 
 
-@router.post("", response_model=FoodLogOut, status_code=status.HTTP_201_CREATED)
-def create_food_log(body: FoodLogCreate, user: CurrentUser, db: DbSession, usda: Usda) -> FoodLogOut:
+def save_food_log(
+    body: FoodLogCreate,
+    user: User,
+    db: Session,
+    usda: UsdaClient,
+    source: LogSource = LogSource.MANUAL,
+) -> FoodLogOut:
+    """Create a food log, turning lookup problems into friendly errors. Shared with AI confirmation."""
     try:
-        log = food_logging.create_food_log(db, user, usda, body)
+        log = food_logging.create_food_log(db, user, usda, body, source=source)
     except UsdaNotFoundError:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "A food in this log was not found") from None
     except UsdaUnavailableError:
@@ -38,6 +47,11 @@ def create_food_log(body: FoodLogCreate, user: CurrentUser, db: DbSession, usda:
     out = food_logging.log_out(log)
     db.commit()
     return out
+
+
+@router.post("", response_model=FoodLogOut, status_code=status.HTTP_201_CREATED)
+def create_food_log(body: FoodLogCreate, user: CurrentUser, db: DbSession, usda: Usda) -> FoodLogOut:
+    return save_food_log(body, user, db, usda)
 
 
 @router.get("", response_model=FoodLogDay)

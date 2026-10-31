@@ -92,12 +92,24 @@ bug. Fix it once with `sudo chown -R "$(id -u):$(id -g)" ~/.npm`.
 - Every schema change needs an Alembic migration.
 - No punishment mechanics: missing a day never reduces garden progress.
 
+## AI
+
+The fairy, natural-language food entry, meal ideas and the weekly summary use the OpenAI API, called only
+from the backend. Set `OPENAI_API_KEY` in `.env`; optionally set `AI_MODEL` (the default is in
+`backend/app/config.py`). Without a key the AI endpoints answer with a calm "the fairy is resting"
+message, and everything else keeps working: AI is an enhancement layer, never a dependency.
+
+- AI proposes, the person decides. A food proposal is only saved through the confirm endpoint, a memory
+  only becomes usable after the person approves it, and no AI code can change a goal.
+- Each person has a daily AI call limit (`AI_DAILY_CALL_LIMIT` in config) so an open signup can't run up
+  the bill. AI calls are made with `store=False`, and failures log only the kind of error, never what
+  the person wrote.
+
 ## Status
 
-- **Backend:** complete except the AI layer (food interpretation, memory, the fairy).
-- **Frontend:** every screen the backend supports is built in a basic, restyle-friendly form: login and
-  registration, onboarding, dashboard, food, daily check-in, weight, workouts, garden, calendar and the
-  calorie goal. Styling is intentionally plain; colours live in `frontend/app/globals.css` and the
-  header links in `frontend/lib/nav.ts`.
-- **Not built yet:** the AI screens and backend, achievements and recipes (the specs don't define them),
-  and a check of the USDA search with a real API key.
+- **Backend:** complete, including the AI endpoints (`/api/v1/ai/*` and `/api/v1/memory`). Not built:
+  achievements and recipes, which the specs don't define.
+- **Frontend:** every screen for the non-AI features is built in a basic, restyle-friendly form. The AI
+  screens (type a meal, chat with the fairy, memories, weekly summary, evening reminder) are not built
+  yet. Colours live in `frontend/app/globals.css` and the header links in `frontend/lib/nav.ts`.
+- **Not yet verified:** the USDA search and the real OpenAI calls, both of which need keys in `.env`.

@@ -98,6 +98,27 @@ GARDEN_ITEM_CATALOG: tuple[tuple[int, str, str], ...] = (
     (5, "SEASONAL", "moon_garden"),
 )
 
+# AI (engineering spec §20, §43-48). AI is an enhancement layer: the core app never depends on it.
+AI_DEFAULT_MODEL = "gpt-4o-mini"  # override with the AI_MODEL environment variable
+AI_TIMEOUT_SECONDS = 30.0
+AI_DAILY_CALL_LIMIT = 200  # per user per day, so an open signup can't run up the bill
+AI_MAX_FOOD_TEXT = 1000
+AI_MAX_CHAT_MESSAGE = 2000
+AI_MAX_CHAT_HISTORY = 10  # earlier messages the client may send back
+AI_FOOD_LOOKUP_ITEMS = 10  # how many interpreted foods get database matches
+AI_FOOD_MATCHES_PER_ITEM = 3
+
+# Memory: a limited amount, only ever with the person's approval (product spec §41).
+MAX_APPROVED_MEMORIES = 50
+MAX_PENDING_MEMORIES = 20
+MAX_MEMORY_TEXT = 200
+AI_CONTEXT_MEMORY_LIMIT = 20  # approved memories shared with the model
+AI_MAX_MEMORY_SUGGESTIONS_PER_REPLY = 3
+
+# The gentle evening reminder: at most one a day (engineering spec §48, product spec §38).
+NUDGE_AFTER_HOUR = 18  # local time
+NUDGE_BELOW_RATIO = 0.6  # of today's calorie target
+
 # Engineering spec §12: initial default target is TDEE + 250 kcal/day.
 INITIAL_SURPLUS_KCAL = 250
 

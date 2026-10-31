@@ -18,6 +18,7 @@ class UsdaItemIn(BaseModel):
     quantity: float = Field(gt=0, le=100_000, allow_inf_nan=False)
     # "g", or one of the food's portion descriptions (e.g. "1 cup").
     unit: str = Field(min_length=1, max_length=100)
+    confidence: float | None = Field(default=None, ge=0, le=1)  # how sure an AI reading was
 
 
 class CustomItemIn(BaseModel):
@@ -32,6 +33,7 @@ class CustomItemIn(BaseModel):
     carbohydrate_g: float | None = Field(default=None, ge=0, le=_NUTRIENT_MAX, allow_inf_nan=False)
     fat_g: float | None = Field(default=None, ge=0, le=_NUTRIENT_MAX, allow_inf_nan=False)
     fiber_g: float | None = Field(default=None, ge=0, le=_NUTRIENT_MAX, allow_inf_nan=False)
+    confidence: float | None = Field(default=None, ge=0, le=1)
 
 
 FoodItemIn = Annotated[UsdaItemIn | CustomItemIn, Field(discriminator="food_source")]

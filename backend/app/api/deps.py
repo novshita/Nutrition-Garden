@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import Cookie, Depends, HTTPException, status
@@ -23,3 +24,8 @@ def get_current_user(
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
+
+
+def get_now() -> datetime:
+    """The current moment; a dependency so time-of-day rules can be tested."""
+    return datetime.now(UTC)
