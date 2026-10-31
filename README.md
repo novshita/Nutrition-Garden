@@ -94,4 +94,10 @@ bug. Fix it once with `sudo chown -R "$(id -u):$(id -g)" ~/.npm`.
 
 ## Status
 
-Backend is largely complete (everything except the AI layer). Frontend has started: login, registration and a first garden view.
+- **Backend:** complete except the AI layer (food interpretation, memory, the fairy).
+- **Frontend:** every screen the backend supports is built in a basic, restyle-friendly form: login and
+  registration, onboarding, dashboard, food, daily check-in, weight, workouts, garden, calendar and the
+  calorie goal. Styling is intentionally plain; colours live in `frontend/app/globals.css` and the
+  header links in `frontend/lib/nav.ts`.
+- **Not built yet:** the AI screens and backend, achievements and recipes (the specs don't define them),
+  and a check of the USDA search with a real API key.
