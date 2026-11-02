@@ -10,6 +10,7 @@ from app.models.garden import (
 )
 from app.models.goals import CalorieTarget
 from app.models.nutrition import UsdaFoodCache
+from app.models.recipes import Recipe
 from app.models.user import AuthSession, User, UserProfile, WeightLog
 from app.models.workouts import (
     WorkoutExercise,
@@ -34,6 +35,7 @@ __all__ = [
     "GardenMilestone",
     "GardenProgress",
     "MoodLog",
+    "Recipe",
     "SleepLog",
     "UsdaFoodCache",
     "User",

@@ -13,6 +13,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.config import (
+    CONSISTENT_DAY_MILESTONES,
     DEFAULT_GARDEN_NAME,
     FIRST_WEEK_ACTIVE_DAYS,
     GARDEN_ITEM_CATALOG,
@@ -121,23 +122,40 @@ def _count_days(db: Session, garden: Garden, action: GrowthAction | None = None)
     return db.scalar(query) or 0
 
 
-def _check_milestones(db: Session, user: User, garden: Garden, action: GrowthAction) -> None:
-    if action == GrowthAction.FOOD_LOGGED:
+def reconcile_milestones(db: Session, user: User, garden: Garden) -> None:
+    """Award every milestone the growth ledger already supports. Safe to run any time.
+
+    Milestones are never taken away, so this only ever adds, and it also catches up on anything earned
+    before a milestone type existed.
+    """
+    if _count_days(db, garden, GrowthAction.FOOD_LOGGED) >= 1:
         _add_milestone(db, garden, MilestoneType.FIRST_LOG, 1)
-    if _count_days(db, garden) >= FIRST_WEEK_ACTIVE_DAYS:
+    if _count_days(db, garden, GrowthAction.WORKOUT_COMPLETED) >= 1:
+        _add_milestone(db, garden, MilestoneType.FIRST_WORKOUT, 1)
+
+    active_days = _count_days(db, garden)
+    if active_days >= FIRST_WEEK_ACTIVE_DAYS:
         _add_milestone(db, garden, MilestoneType.FIRST_WEEK, FIRST_WEEK_ACTIVE_DAYS)
-    if action == GrowthAction.WORKOUT_COMPLETED:
-        days = _count_days(db, garden, action)
-        for threshold in WORKOUT_DAY_MILESTONES:
-            if days >= threshold:
-                _add_milestone(db, garden, MilestoneType.WORKOUT_STREAK, threshold)
-    if action == GrowthAction.WATER_LOGGED:
-        days = _count_days(db, garden, action)
-        for threshold in HYDRATION_DAY_MILESTONES:
-            if days >= threshold:
-                _add_milestone(db, garden, MilestoneType.HYDRATION_MILESTONE, threshold)
-    if action == GrowthAction.WEIGHT_LOGGED:
-        _check_weight_milestones(db, user, garden)
+    for threshold in CONSISTENT_DAY_MILESTONES:
+        if active_days >= threshold:
+            _add_milestone(db, garden, MilestoneType.CONSISTENT_TRACKING, threshold)
+
+    workout_days = _count_days(db, garden, GrowthAction.WORKOUT_COMPLETED)
+    for threshold in WORKOUT_DAY_MILESTONES:
+        if workout_days >= threshold:
+            _add_milestone(db, garden, MilestoneType.WORKOUT_STREAK, threshold)
+    water_days = _count_days(db, garden, GrowthAction.WATER_LOGGED)
+    for threshold in HYDRATION_DAY_MILESTONES:
+        if water_days >= threshold:
+            _add_milestone(db, garden, MilestoneType.HYDRATION_MILESTONE, threshold)
+
+    for stage in range(2, garden.progress.growth_stage + 1):
+        _add_milestone(db, garden, MilestoneType.GARDEN_STAGE, stage)
+    _check_weight_milestones(db, user, garden)
+
+
+def _check_milestones(db: Session, user: User, garden: Garden, action: GrowthAction) -> None:
+    reconcile_milestones(db, user, garden)
 
 
 def _check_weight_milestones(db: Session, user: User, garden: Garden) -> None:

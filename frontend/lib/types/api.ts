@@ -294,7 +294,9 @@ export type MilestoneType =
   | "WORKOUT_STREAK"
   | "HYDRATION_MILESTONE"
   | "WEIGHT_MILESTONE"
-  | "GARDEN_STAGE";
+  | "GARDEN_STAGE"
+  | "FIRST_WORKOUT"
+  | "CONSISTENT_TRACKING";
 
 export type Milestone = { milestone_type: MilestoneType; trigger_value: number; unlocked_at: string };
 
@@ -392,3 +394,27 @@ export type WeeklySummary = {
 };
 
 export type Nudge = { show: boolean; message: string | null };
+
+/** An achievement, earned or still ahead. Earned ones are permanent. */
+export type Achievement = {
+  milestone_type: MilestoneType;
+  trigger_value: number;
+  unlocked: boolean;
+  unlocked_at: string | null;
+};
+
+export type Recipe = {
+  id: string;
+  name: string;
+  description: string | null;
+  servings: number;
+  serving_size: string | null;
+  calories: number | null;
+  protein_g: number | null;
+  carbohydrate_g: number | null;
+  fat_g: number | null;
+  fiber_g: number | null;
+  ingredients: string[];
+  alternatives: string[];
+  instructions: string | null;
+};

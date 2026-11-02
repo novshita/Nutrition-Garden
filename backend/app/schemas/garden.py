@@ -44,3 +44,12 @@ class MilestoneOut(BaseModel):
     milestone_type: MilestoneType
     trigger_value: int
     unlocked_at: datetime
+
+
+class AchievementOut(BaseModel):
+    """One achievement, earned or still ahead. Earning is permanent and nothing is ever taken away."""
+
+    milestone_type: MilestoneType
+    trigger_value: int
+    unlocked: bool
+    unlocked_at: datetime | None
