@@ -61,6 +61,8 @@ describe("describeMilestone", () => {
       ["HYDRATION_MILESTONE", 30, "Water logged on 30 days"],
       ["WEIGHT_MILESTONE", 50, "50% of the way to your goal weight"],
       ["GARDEN_STAGE", 2, "Your garden reached stage 2"],
+      ["FIRST_WORKOUT", 1, "Your first workout"],
+      ["CONSISTENT_TRACKING", 30, "Tended your garden on 30 days"],
     ];
     for (const [type, value, text] of cases) expect(describeMilestone(type, value)).toBe(text);
   });

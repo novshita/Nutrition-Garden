@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +9,48 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { api, ApiError } from "@/lib/api/client";
 import { MEAL_LABELS, MEAL_ORDER } from "@/lib/food";
-import type { MealRecommendationResponse, MealType } from "@/lib/types/api";
+import { recipeFromIdea } from "@/lib/recipes";
+import type { MealRecommendation, MealRecommendationResponse, MealType } from "@/lib/types/api";
+
+/** Keep a meal idea as one of your own recipes, ready to edit. */
+function SaveAsRecipe({ idea }: { idea: MealRecommendation }) {
+  const [state, setState] = useState<"idle" | "saving" | "saved">("idle");
+  const [error, setError] = useState<string | null>(null);
+
+  async function save() {
+    setState("saving");
+    setError(null);
+    try {
+      await api("/recipes", { method: "POST", body: recipeFromIdea(idea) });
+      setState("saved");
+    } catch (caught) {
+      setError(caught instanceof ApiError ? caught.message : "Something went wrong.");
+      setState("idle");
+    }
+  }
+
+  if (state === "saved") {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Saved to your{" "}
+        <Link href="/recipes" className="text-primary underline-offset-4 hover:underline">
+          recipes
+        </Link>{" "}
+        🌱
+      </p>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-1">
+      <Button type="button" size="sm" variant="outline" className="self-start" disabled={state === "saving"} onClick={save}>
+        {state === "saving" ? "Saving…" : "Save as recipe"}
+      </Button>
+      <p role="alert" className="text-sm text-destructive empty:hidden">
+        {error}
+      </p>
+    </div>
+  );
+}
 
 export function MealIdeas() {
   const [note, setNote] = useState("");
@@ -92,6 +134,7 @@ export function MealIdeas() {
                 {idea.alternatives.length > 0 && (
                   <p className="text-sm text-muted-foreground">Or try: {idea.alternatives.join("; ")}</p>
                 )}
+                <SaveAsRecipe idea={idea} />
               </section>
             ))}
             <p className="text-xs text-muted-foreground">{result.note}</p>

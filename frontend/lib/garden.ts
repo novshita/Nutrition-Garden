@@ -82,6 +82,10 @@ export function describeMilestone(type: MilestoneType, value: number): string {
       return `${value}% of the way to your goal weight`;
     case "GARDEN_STAGE":
       return `Your garden reached stage ${value}`;
+    case "FIRST_WORKOUT":
+      return "Your first workout";
+    case "CONSISTENT_TRACKING":
+      return `Tended your garden on ${value} days`;
     default:
       return "A new milestone";
   }

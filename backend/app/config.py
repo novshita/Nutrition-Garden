@@ -76,6 +76,7 @@ CALORIE_TARGET_MET_RATIO = 0.9  # "reasonably met": at least 90% of the target; 
 FIRST_WEEK_ACTIVE_DAYS = 7
 WORKOUT_DAY_MILESTONES = (3, 7, 14, 30)  # days with a completed workout (not consecutive)
 HYDRATION_DAY_MILESTONES = (7, 30)  # days with water logged
+CONSISTENT_DAY_MILESTONES = (14, 30, 60, 100)  # days with anything logged (not consecutive)
 WEIGHT_PROGRESS_MILESTONES_PERCENT = (25, 50, 75, 100)  # of the way from first weight to goal
 DEFAULT_GARDEN_NAME = "My Nutrition Garden"
 
@@ -118,6 +119,13 @@ AI_MAX_MEMORY_SUGGESTIONS_PER_REPLY = 3
 # The gentle evening reminder: at most one a day (engineering spec §48, product spec §38).
 NUDGE_AFTER_HOUR = 18  # local time
 NUDGE_BELOW_RATIO = 0.6  # of today's calorie target
+
+# Recipes (product spec §18): your own, approximate, and easy to log.
+MAX_RECIPES_PER_USER = 200
+RECIPE_MAX_SERVINGS_MADE = 50
+RECIPE_MAX_SERVING_CALORIES = 2000
+RECIPE_MAX_SERVING_NUTRIENT_G = 500
+MAX_RECIPE_LOG_SERVINGS = 10  # so a logged serving stays within the food log's own limits
 
 # Engineering spec §12: initial default target is TDEE + 250 kcal/day.
 INITIAL_SURPLUS_KCAL = 250

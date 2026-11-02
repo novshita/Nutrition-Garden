@@ -3,8 +3,9 @@ import uuid
 from fastapi import APIRouter, HTTPException, status
 
 from app.api.deps import CurrentUser, DbSession
-from app.schemas.garden import GardenItemOut, GardenOut, MilestoneOut, PlaceItem
+from app.schemas.garden import AchievementOut, GardenItemOut, GardenOut, MilestoneOut, PlaceItem
 from app.services.errors import NotFoundError
+from app.services.garden import achievements as achievements_service
 from app.services.garden import garden as service
 
 router = APIRouter(prefix="/garden", tags=["garden"])
@@ -41,4 +42,12 @@ def place_item(
 def list_milestones(user: CurrentUser, db: DbSession) -> list[MilestoneOut]:
     out = service.list_milestones(db, user)
     db.commit()
+    return out
+
+
+@router.get("/achievements", response_model=list[AchievementOut])
+def list_achievements(user: CurrentUser, db: DbSession) -> list[AchievementOut]:
+    """Every achievement, earned or still to come. Earned ones are permanent."""
+    out = achievements_service.list_achievements(db, user)
+    db.commit()  # catching up on earlier progress may add milestones
     return out

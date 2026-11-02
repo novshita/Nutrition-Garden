@@ -16,6 +16,7 @@ from app.api.v1 import (
     mood,
     nutrition,
     profile,
+    recipes,
     sleep,
     water,
     weight,
@@ -42,3 +43,4 @@ api_router.include_router(dashboard.router)
 api_router.include_router(calendar.router)
 api_router.include_router(ai.router)
 api_router.include_router(memory.router)
+api_router.include_router(recipes.router)

@@ -6,6 +6,8 @@ export const NAV_ITEMS: { href: string; label: string }[] = [
   { href: "/weight", label: "Weight" },
   { href: "/workouts", label: "Workouts" },
   { href: "/garden", label: "Garden" },
+  { href: "/achievements", label: "Achievements" },
+  { href: "/recipes", label: "Recipes" },
   { href: "/calendar", label: "Calendar" },
   { href: "/goals", label: "Calorie goal" },
   { href: "/fairy", label: "Fairy" },
