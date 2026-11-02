@@ -1,6 +1,7 @@
 "use client";
 
 import { AppHeader } from "@/components/app-header";
+import { NudgeBanner } from "@/components/dashboard/nudge-banner";
 import { CaloriesCard } from "@/components/dashboard/calories-card";
 import { DayTiles } from "@/components/dashboard/day-tiles";
 import { WorkoutCard } from "@/components/dashboard/workout-card";
@@ -45,6 +46,8 @@ export default function HomePage() {
         <h1 className="font-diary text-4xl">Hello, {user.display_name}</h1>
         {day && <p className="text-muted-foreground">{formatLongDate(day.date)}</p>}
       </div>
+
+      {day && <NudgeBanner today={day.date} />}
 
       {garden.data && <GardenCard garden={garden.data} />}
 

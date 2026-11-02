@@ -25,7 +25,14 @@ const MAX_QUANTITY = 100_000;
 const MAX_CALORIES = 20_000;
 const MAX_NUTRIENT_G = 5_000;
 
-export type UsdaItemPayload = { food_source: "USDA"; fdc_id: number; quantity: number; unit: string };
+export type UsdaItemPayload = {
+  food_source: "USDA";
+  fdc_id: number;
+  quantity: number;
+  unit: string;
+  /** How sure an AI reading was (0 to 1); left out for foods the person picked themselves. */
+  confidence?: number;
+};
 
 export type CustomItemPayload = {
   food_source: "CUSTOM";
@@ -37,6 +44,7 @@ export type CustomItemPayload = {
   carbohydrate_g?: number;
   fat_g?: number;
   fiber_g?: number;
+  confidence?: number;
 };
 
 export type FoodItemPayload = UsdaItemPayload | CustomItemPayload;

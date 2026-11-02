@@ -8,4 +8,6 @@ export const NAV_ITEMS: { href: string; label: string }[] = [
   { href: "/garden", label: "Garden" },
   { href: "/calendar", label: "Calendar" },
   { href: "/goals", label: "Calorie goal" },
+  { href: "/fairy", label: "Fairy" },
+  { href: "/memories", label: "Memories" },
 ];
