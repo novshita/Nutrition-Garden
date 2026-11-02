@@ -337,3 +337,58 @@ export type CalorieSuggestion = {
   suggested_target_kcal: number | null;
   days_until_evaluation: number | null;
 };
+
+export type AiStatus = { available: boolean };
+
+export type InterpretedItem = {
+  food_name: string;
+  quantity: number | null;
+  unit: string | null;
+  preparation_method: string | null;
+  confidence: number;
+};
+
+/** A proposal from the AI. Nothing is saved until the person reviews and confirms it. */
+export type FoodInterpretation = {
+  items: InterpretedItem[];
+  meal_context: string | null;
+  assumptions: string[];
+  needs_clarification: boolean;
+  clarification_question: string | null;
+};
+
+export type ItemMatches = { food_name: string; source: "usda" | "cache"; matches: FoodItem[] };
+export type FoodInterpretationResponse = { interpretation: FoodInterpretation; lookups: ItemMatches[] };
+
+export type MemoryCategory = "FOOD_LIKE" | "FOOD_DISLIKE" | "MEAL_PREFERENCE" | "ROUTINE" | "OTHER";
+export type MemoryStatus = "PENDING" | "APPROVED" | "REJECTED" | "ARCHIVED";
+export type Memory = {
+  id: string;
+  category: MemoryCategory;
+  memory_text: string;
+  status: MemoryStatus;
+  created_at: string;
+};
+
+export type ChatResponse = { reply: string; memory_suggestions: Memory[] };
+
+export type MealRecommendation = {
+  title: string;
+  description: string;
+  estimated_calories: number;
+  estimated_protein: number | null;
+  reasoning: string;
+  ingredients: string[];
+  alternatives: string[];
+  confidence: number;
+};
+export type MealRecommendationResponse = { recommendations: MealRecommendation[]; note: string };
+
+export type WeeklySummary = {
+  period_start: string;
+  period_end: string;
+  summary: string;
+  highlights: string[];
+};
+
+export type Nudge = { show: boolean; message: string | null };

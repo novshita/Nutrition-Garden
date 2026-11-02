@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AppHeader } from "@/components/app-header";
+import { AiFoodEntry } from "@/components/food/ai-food-entry";
 import { CustomFoodFormView } from "@/components/food/custom-food-form";
 import { FoodLogList } from "@/components/food/food-log-list";
 import { FoodSearch } from "@/components/food/food-search";
@@ -16,7 +17,7 @@ import { useSession } from "@/hooks/use-session";
 import type { FoodItemPayload } from "@/lib/food";
 import type { DailyNutrition, FoodItem, FoodLogDay } from "@/lib/types/api";
 
-type Mode = "search" | "custom";
+type Mode = "search" | "custom" | "ai";
 
 export default function FoodPage() {
   const { user, loading, error, signOut } = useSession();
@@ -78,6 +79,14 @@ export default function FoodPage() {
             >
               Add my own
             </Button>
+            <Button
+              type="button"
+              variant={mode === "ai" ? "default" : "outline"}
+              aria-pressed={mode === "ai"}
+              onClick={() => setMode("ai")}
+            >
+              Tell the fairy 🧚
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
@@ -93,6 +102,8 @@ export default function FoodPage() {
                 />
               )}
             </>
+          ) : mode === "ai" ? (
+            <AiFoodEntry onSaved={refresh} />
           ) : (
             <CustomFoodFormView onAdd={addToDraft} />
           )}
