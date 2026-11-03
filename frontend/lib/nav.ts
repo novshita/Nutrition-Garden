@@ -12,4 +12,5 @@ export const NAV_ITEMS: { href: string; label: string }[] = [
   { href: "/goals", label: "Calorie goal" },
   { href: "/fairy", label: "Fairy" },
   { href: "/memories", label: "Memories" },
+  { href: "/settings", label: "Settings" },
 ];

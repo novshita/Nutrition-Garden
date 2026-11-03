@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.enums import CalorieTargetSource, GoalType, GrowthAction
 from app.models import User, UserProfile, WeightLog
-from app.schemas.profile import ProfileCreate, ProfileResponse, ProfileSummary
+from app.schemas.profile import ProfileCreate, ProfileResponse, ProfileSummary, ProfileUpdate
 from app.services import goals
 from app.services import weight as weight_service
 from app.services.calculations import body
@@ -16,6 +16,10 @@ from app.services.garden import garden as garden_service
 
 
 class ProfileExistsError(Exception):
+    pass
+
+
+class ProfileNotFoundError(Exception):
     pass
 
 
@@ -52,6 +56,21 @@ def create_profile(db: Session, user: User, data: ProfileCreate) -> ProfileSumma
         CalorieTargetSource.INITIAL_ESTIMATE,
         "Initial estimate: TDEE + 250 kcal/day",
     )
+    return summary
+
+
+def update_profile(db: Session, user: User, data: ProfileUpdate) -> ProfileSummary:
+    """Change profile details. The calorie goal is never touched: a different estimate is shown, and
+    the person decides whether to change their goal (product spec §12)."""
+    profile = db.scalar(select(UserProfile).where(UserProfile.user_id == user.id))
+    if profile is None:
+        raise ProfileNotFoundError
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(profile, field, value)
+    db.flush()
+    summary = get_summary(db, user)
+    if summary is None:  # no weigh-in can't happen after onboarding, but never return a half answer
+        raise ProfileNotFoundError
     return summary
 
 

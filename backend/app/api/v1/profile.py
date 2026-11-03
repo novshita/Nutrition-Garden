@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
 
 from app.api.deps import CurrentUser, DbSession
-from app.schemas.profile import ProfileCreate, ProfileSummary
+from app.schemas.profile import ProfileCreate, ProfileSummary, ProfileUpdate
 from app.services import profile as profile_service
 
 router = APIRouter(prefix="/profile", tags=["profile"])
@@ -22,4 +22,15 @@ def get_profile(user: CurrentUser, db: DbSession) -> ProfileSummary:
     summary = profile_service.get_summary(db, user)
     if summary is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Profile not found")
+    return summary
+
+
+@router.patch("", response_model=ProfileSummary)
+def update_profile(body: ProfileUpdate, user: CurrentUser, db: DbSession) -> ProfileSummary:
+    """Change some details. Only what you send changes, and your calorie goal stays exactly as it is."""
+    try:
+        summary = profile_service.update_profile(db, user, body)
+    except profile_service.ProfileNotFoundError:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Profile not found") from None
+    db.commit()
     return summary
