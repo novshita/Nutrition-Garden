@@ -73,6 +73,7 @@ cd frontend
 npm install
 npm run dev                      # http://localhost:3000
 npm test                         # unit tests
+npm run test:e2e                 # browser tests (see below)
 npm run typecheck && npm run lint
 ```
 
@@ -82,6 +83,13 @@ CORS setup is needed. Start the backend first.
 
 If `npm install` fails with `EACCES` on `~/.npm`, your npm cache has root-owned files from an old npm
 bug. Fix it once with `sudo chown -R "$(id -u):$(id -g)" ~/.npm`.
+
+### Browser tests
+
+`npm run test:e2e` drives a real Chromium through register, onboarding, logging food, weight and water,
+every page and settings. It starts its own backend (port 8100, a throwaway `nutrition_garden_e2e`
+database that is dropped and recreated each run, AI switched off) and its own Next.js server (port 3200),
+so it never touches your dev data or the app on 3000/8000. One-time setup: `npx playwright install chromium`.
 
 ## Ground rules
 
@@ -115,4 +123,4 @@ Every feature the specs define is built, on both sides.
   `frontend/app/globals.css` and the header links in `frontend/lib/nav.ts`. Without an OpenAI key the AI
   screens show a calm "the fairy is resting" notice.
 - **Not yet verified:** the USDA search and the real OpenAI calls, both of which need keys in `.env`,
-  and a click-through of the whole app in a browser.
+  and a by-eye look at the design. Browser tests cover the main flows with AI off.

@@ -24,7 +24,12 @@ export default function OnboardingPage() {
     <main className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 p-4 sm:p-8">
       <p className="font-diary text-3xl text-primary">🌷 Nutrition Garden</p>
       {created ? (
-        <OnboardingResult summary={created} onContinue={() => router.replace("/")} />
+        <OnboardingResult summary={created} onContinue={() => {
+            // A full load, not router.replace: the dashboard visited just before onboarding is kept
+            // alive by Next with its old "no profile yet" state, and would bounce straight back here.
+            // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+            window.location.href = "/";
+          }} />
       ) : needsOnboarding ? (
         <Card>
           <CardHeader>

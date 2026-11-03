@@ -55,7 +55,8 @@ export default function SettingsPage() {
             summary={summary}
             onSaved={(next, message) => {
               setUpdated(next);
-              setNote(message);
+              // The form remounts on a real change, so the confirmation lives here, not in the form.
+              setNote(message ? `Saved 🌱 ${message}` : "Saved 🌱");
             }}
           />
         </CardContent>
