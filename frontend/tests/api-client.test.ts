@@ -36,6 +36,14 @@ describe("api", () => {
     expect(init.headers).toEqual({ "Content-Type": "application/json" });
   });
 
+  it("supports PATCH for partial updates", async () => {
+    const fetchMock = mockFetch(json({ ok: true }));
+    await api("/profile", { method: "PATCH", body: { goal_weight_kg: 60 } });
+    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(init.method).toBe("PATCH");
+    expect(init.body).toBe(JSON.stringify({ goal_weight_kg: 60 }));
+  });
+
   it("returns undefined for 204 responses", async () => {
     mockFetch(new Response(null, { status: 204 }));
     await expect(api<void>("/auth/logout", { method: "POST" })).resolves.toBeUndefined();
