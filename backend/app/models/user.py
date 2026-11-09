@@ -7,6 +7,7 @@ from sqlalchemy import (
     DateTime,
     Enum,
     ForeignKey,
+    Index,
     Numeric,
     String,
     Text,
@@ -46,6 +47,21 @@ class AuthSession(Base):
     token_hash: Mapped[str] = mapped_column(String(64), unique=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class LoginFailure(Base):
+    """One wrong-password attempt, kept briefly so repeated guessing can be slowed down.
+
+    `key` names what is being guarded (an email for sign-in, a user id for password change), so unknown
+    emails are throttled the same way as real ones and the response never reveals which exist.
+    """
+
+    __tablename__ = "login_failure"
+    __table_args__ = (Index("ix_login_failure_key_attempted_at", "key", "attempted_at"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    key: Mapped[str] = mapped_column(String(400))
+    attempted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
 
 class UserProfile(Base):

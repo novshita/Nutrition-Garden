@@ -10,6 +10,9 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   retries: 0,
+  timeout: 60_000,
+  // The first visit to each page compiles it in dev mode, which can take a few seconds.
+  expect: { timeout: 15_000 },
   reporter: [["list"]],
   use: {
     baseURL: `http://localhost:${FRONTEND_PORT}`,

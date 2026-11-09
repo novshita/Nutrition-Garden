@@ -23,12 +23,14 @@ test.describe("a first day in the garden", () => {
     await expect(page.getByText("1 food ready to save.")).toBeVisible();
 
     await page.getByLabel("Which meal?").selectOption("BREAKFAST");
+    const saved = page.waitForResponse((r) => r.url().endsWith("/api/v1/food/log") && r.request().method() === "POST");
     await page.getByRole("button", { name: "Save meal" }).click();
-    await expect(page.getByText("Peanut butter toast").first()).toBeVisible();
+    expect((await saved).status()).toBe(201);
+    await expect(page.getByText("1 food ready to save.")).toHaveCount(0);
 
     await page.getByRole("link", { name: "Today" }).click();
     await expect(page.getByText(/^450 of [\d,]+ kcal$/)).toBeVisible();
-    await expect(page.getByText("15 g")).toBeVisible();
+    await expect(page.locator("p:visible", { hasText: /^Protein:\s*15 g/ })).toBeVisible();
   });
 
   test("nothing is saved until I save the meal, and I can remove a food", async ({ page }) => {
