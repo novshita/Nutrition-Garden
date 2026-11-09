@@ -4,8 +4,9 @@ from fastapi import APIRouter
 
 from app.api.deps import CurrentUser, DbSession
 from app.schemas.food_log import DailyNutrition
+from app.schemas.protein import ProteinWeek
 from app.services import goals
-from app.services.nutrition import food_logging
+from app.services.nutrition import food_logging, protein
 from app.services.timezone import get_timezone, local_day_bounds, local_today
 
 router = APIRouter(prefix="/nutrition", tags=["nutrition"])
@@ -29,3 +30,9 @@ def daily_nutrition(user: CurrentUser, db: DbSession, day: date | None = None) -
         calorie_target_kcal=target.target_kcal if target else None,
         calories_remaining=remaining,
     )
+
+
+@router.get("/protein/week", response_model=ProteinWeek)
+def protein_week(user: CurrentUser, db: DbSession, end: date | None = None) -> ProteinWeek:
+    """Protein for the 7 local days ending on `end` (default today): what was logged, never a target."""
+    return protein.week_summary(db, user, end or local_today(db, user))

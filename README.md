@@ -121,6 +121,9 @@ Every feature the specs define is built, on both sides.
   wrong passwords (`LOGIN_MAX_FAILURES` per `LOGIN_FAILURE_WINDOW_MINUTES` in `backend/app/config.py`).
 - **Workouts:** templates can be edited and deleted (recorded sessions keep their names), and a session can
   record each set. **Water:** a 2 L daily goal (`WATER_TARGET_ML` in `backend/app/config.py`), shown as progress.
+- **Protein:** counted and summarised for the week (`/api/v1/nutrition/protein/week`), with a gentle
+  weight-based reminder (`PROTEIN_GUIDE_G_PER_KG`), never a target. **Account:** you can delete your account
+  and all its data from Settings (password required).
 - **Backend:** all endpoints, including AI (`/api/v1/ai/*`, `/api/v1/memory`), achievements
   (`/api/v1/garden/achievements`) and recipes (`/api/v1/recipes`).
 - **Frontend:** every screen is built in a basic, restyle-friendly form. Colours live in

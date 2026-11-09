@@ -7,6 +7,7 @@ import { Field } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { api, ApiError } from "@/lib/api/client";
 import {
+  buildDeleteRequest,
   buildNameChange,
   buildPasswordChange,
   MAX_NAME_LENGTH,
@@ -27,6 +28,7 @@ export function AccountCard({ user }: { user: User }) {
       <CardContent className="flex flex-col gap-8">
         <NameForm initial={user.display_name} />
         <PasswordForm />
+        <DeleteAccount />
       </CardContent>
     </Card>
   );
@@ -157,6 +159,86 @@ function PasswordForm() {
           {busy ? "Saving…" : "Change password"}
         </Button>
         {message && <span role="status" className="text-sm text-muted-foreground">{message}</span>}
+      </div>
+    </form>
+  );
+}
+
+function DeleteAccount() {
+  const id = useId();
+  const [open, setOpen] = useState(false);
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    const result = buildDeleteRequest(password);
+    if (!result.ok) return setError(result.error);
+    setBusy(true);
+    try {
+      await api<void>("/auth/delete-account", { method: "POST", body: result.payload });
+      // A full load, so nothing from the old account stays in memory.
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+      window.location.href = "/login";
+    } catch (caught) {
+      setError(messageOf(caught));
+      setBusy(false);
+    }
+  }
+
+  if (!open) {
+    return (
+      <div className="flex flex-col gap-2 border-t pt-6">
+        <p className="text-sm font-medium">Delete your account</p>
+        <p className="text-sm text-muted-foreground">
+          Erases your account and everything in it. You can always sign out instead.
+        </p>
+        <Button type="button" variant="outline" className="self-start" onClick={() => setOpen(true)}>
+          Delete my account…
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <form
+      onSubmit={submit}
+      className="flex flex-col gap-3 border-t pt-6"
+      noValidate
+      aria-label="Delete account"
+    >
+      <p className="text-sm font-medium">Delete your account for good?</p>
+      <p className="text-sm text-muted-foreground">
+        This permanently erases your profile, food, weight, workouts, garden, recipes and memories. It
+        can&apos;t be undone and we can&apos;t bring it back. Enter your password to confirm.
+      </p>
+      <Field label="Your password" htmlFor={id} error={error ?? undefined}>
+        <Input
+          id={id}
+          type="password"
+          autoComplete="current-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+      </Field>
+      <div className="flex gap-2">
+        <Button type="submit" variant="destructive" disabled={busy}>
+          {busy ? "Deleting…" : "Permanently delete my account"}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={busy}
+          onClick={() => {
+            setOpen(false);
+            setPassword("");
+            setError(null);
+          }}
+        >
+          Keep my account
+        </Button>
       </div>
     </form>
   );

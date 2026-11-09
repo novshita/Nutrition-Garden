@@ -18,7 +18,7 @@ test.describe("a first day in the garden", () => {
     await page.getByLabel("Amount").fill("2");
     await page.getByLabel("In", { exact: true }).fill("slice");
     await page.getByLabel("Calories (kcal)").fill("450");
-    await page.getByLabel(/^Protein/).fill("15");
+    await page.getByLabel(/^Protein \(g\)/).fill("15");
     await page.getByRole("button", { name: "Add to meal" }).click();
     await expect(page.getByText("1 food ready to save.")).toBeVisible();
 

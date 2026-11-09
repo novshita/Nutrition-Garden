@@ -53,6 +53,12 @@ USDA_BASE_URL = "https://api.nal.usda.gov/fdc/v1"
 USDA_TIMEOUT_SECONDS = 10.0
 USDA_CACHE_TTL_DAYS = 30
 
+# Protein is counted and summarised, never a target: missing a number must not feel like failing. This
+# only feeds a gentle "many people aim for roughly this much" reminder (grams per kg of body weight,
+# a modest range for someone gaining weight). It never affects goals, the garden or any warning.
+PROTEIN_GUIDE_G_PER_KG = (1.2, 1.6)
+PROTEIN_SUMMARY_DAYS = 7
+
 # Workout calorie estimates are informational only and never change the food target (spec §23, §30).
 # Rough MET values for bodyweight/home exercise, adapted from the Compendium of Physical Activities.
 # kcal = MET x body weight (kg) x hours.

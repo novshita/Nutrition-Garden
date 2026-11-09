@@ -57,3 +57,14 @@ describe("buildPasswordChange", () => {
     if (!result.ok) expect(Object.keys(result.errors).sort()).toEqual(["current", "next"]);
   });
 });
+
+import { buildDeleteRequest } from "@/lib/account";
+
+describe("buildDeleteRequest", () => {
+  it("needs the password", () => {
+    expect(buildDeleteRequest("").ok).toBe(false);
+  });
+  it("sends the password exactly as typed", () => {
+    expect(buildDeleteRequest(" spaced password ")).toEqual({ ok: true, payload: { password: " spaced password " } });
+  });
+});

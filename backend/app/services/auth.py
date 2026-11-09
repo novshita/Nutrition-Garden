@@ -87,3 +87,13 @@ def delete_other_sessions(db: Session, user: User, keep_token: str | None) -> No
     if keep_token:
         stmt = stmt.where(AuthSession.token_hash != _hash_token(keep_token))
     db.execute(stmt)
+
+
+def delete_account(db: Session, user: User) -> None:
+    """Erase the account and everything that belongs to it.
+
+    Every table that holds a person's data references the user with ON DELETE CASCADE, so one delete
+    at the database level removes it all (sessions, food, weight, workouts, garden, memories, ...).
+    """
+    db.execute(delete(User).where(User.id == user.id))
+    db.expire_all()

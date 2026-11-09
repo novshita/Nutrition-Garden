@@ -100,7 +100,7 @@ def test_empty_day_is_calm_not_alarming(client):
     d = client.get("/api/v1/dashboard/today").json()
     assert d["date"] == TODAY.isoformat()
     assert d["calories"] == {"consumed": None, "target": None, "remaining": None}
-    assert d["protein"] == {"consumed_g": None, "target_g": None}
+    assert d["protein"] == {"consumed_g": None, "guide": None}  # no weight yet, so no reminder
     assert d["water_ml"] == 0
     assert d["sleep_minutes"] is None and d["steps"] is None
     assert d["mood"] is None and d["weight_kg"] is None
@@ -131,7 +131,17 @@ def test_dashboard_brings_every_tracker_together(client):
 
     d = client.get("/api/v1/dashboard/today").json()
     assert d["calories"] == {"consumed": 1000, "target": 2000, "remaining": 1000}
-    assert d["protein"] == {"consumed_g": 30, "target_g": None}
+    # The reminder follows the latest weigh-in (51.2 kg here), and is never a target.
+    assert d["protein"] == {
+        "consumed_g": 30,
+        "guide": {
+            "weight_kg": 51.2,
+            "low_g_per_day": 61,
+            "high_g_per_day": 82,
+            "low_g_per_week": 427,
+            "high_g_per_week": 574,
+        },
+    }
     assert d["nutrition"]["items_logged"] == 2
     assert d["nutrition"]["items_missing"]["protein_g"] == 1  # honest about what's unknown
     assert (d["water_ml"], d["sleep_minutes"], d["steps"], d["mood"]) == (750, 450, 2500, "GOOD")
