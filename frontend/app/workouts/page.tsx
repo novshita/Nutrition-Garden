@@ -51,10 +51,20 @@ export default function WorkoutsPage() {
           onSaved={schedule.reload}
         />
       )}
-      {templates.data && <TemplateList templates={templates.data} />}
-      <TemplateFormView onCreated={templates.reload} />
       {templates.data && (
-        <SessionForm templates={templates.data} timeZone={timeZone} onSaved={sessions.reload} />
+        <TemplateList
+          templates={templates.data}
+          onChanged={() => {
+            // An edit or delete can change the plan and what the history shows.
+            templates.reload();
+            schedule.reload();
+            sessions.reload();
+          }}
+        />
+      )}
+      <TemplateFormView onSaved={templates.reload} />
+      {templates.data && (
+        <SessionForm key={JSON.stringify(templates.data)} templates={templates.data} timeZone={timeZone} onSaved={sessions.reload} />
       )}
       {sessions.data && <SessionList sessions={sessions.data} timeZone={timeZone} />}
     </div>

@@ -2,8 +2,9 @@
 
 import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import { ProgressBar } from "@/components/ui/progress-bar";
 import { api, ApiError } from "@/lib/api/client";
-import { formatDuration, formatInt, formatVolume, formatWeight, waterQuickAmounts } from "@/lib/format";
+import { formatDuration, formatInt, formatVolume, formatWeight, percentOf, waterQuickAmounts } from "@/lib/format";
 import type { DayOverview, Mood, UnitSystem } from "@/lib/types/api";
 
 const MOOD_LABELS: Record<Mood, string> = {
@@ -32,10 +33,12 @@ const Empty = ({ children }: { children: ReactNode }) => (
 
 function WaterTile({
   ml,
+  targetMl,
   unit,
   onAdded,
 }: {
   ml: number;
+  targetMl: number;
   unit: UnitSystem;
   onAdded: () => void;
 }) {
@@ -57,7 +60,11 @@ function WaterTile({
 
   return (
     <Tile title="Water">
-      <Value>{formatVolume(ml, unit)}</Value>
+      <Value>
+        {formatVolume(ml, unit)}
+        <span className="text-sm font-normal text-muted-foreground"> of {formatVolume(targetMl, unit)}</span>
+      </Value>
+      <ProgressBar value={percentOf(ml, targetMl) ?? 0} label="Water toward today's goal" />
       <div className="mt-2 flex flex-wrap gap-2">
         {waterQuickAmounts(unit).map((amount) => (
           <Button
@@ -92,7 +99,7 @@ export function DayTiles({
 }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2">
-      <WaterTile ml={day.water_ml} unit={unit} onAdded={onChange} />
+      <WaterTile ml={day.water_ml} targetMl={day.water_target_ml} unit={unit} onAdded={onChange} />
       <Tile title="Sleep">
         {day.sleep_minutes === null ? (
           <Empty>Not logged yet</Empty>

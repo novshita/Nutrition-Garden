@@ -41,6 +41,8 @@ TREND_MIN_DAYS_WITH_DATA = 3
 
 # Sanity limits for daily tracking input.
 MAX_WATER_ENTRY_ML = 5000
+# A simple daily goal for everyone: 2 litres, about 8 glasses of 250 ml. Shown as progress, never as a penalty.
+WATER_TARGET_ML = 2000
 MAX_STEPS_PER_DAY = 200_000
 MAX_SLEEP_MINUTES = 24 * 60
 SLEEP_QUALITY_MIN = 1

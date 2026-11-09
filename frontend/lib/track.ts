@@ -1,5 +1,6 @@
 /** Rules for the daily check-in: water, sleep, mood and steps. */
 
+import { formatVolume } from "@/lib/format";
 import { parseNumber } from "@/lib/onboarding";
 import type { UnitSystem } from "@/lib/types/api";
 import { flOzToMl } from "@/lib/units";
@@ -151,4 +152,11 @@ export function buildSleepPayload(
   if (notes.length > 500) return { ok: false, error: "Please keep notes under 500 characters." };
   if (notes) payload.notes = notes;
   return { ok: true, payload };
+}
+
+/** How the water goal is going. Warm and never negative: falling short is just "still to go". */
+export function describeWater(totalMl: number, targetMl: number, unit: UnitSystem): string {
+  if (totalMl <= 0) return "A glass of water is a lovely place to start.";
+  if (totalMl >= targetMl) return "You've reached today's water goal. 💧";
+  return `${formatVolume(targetMl - totalMl, unit)} still to sip today.`;
 }

@@ -202,3 +202,242 @@ describe("buildSessionPayload", () => {
     expect(buildSessionPayload({ ...base, date, startTime, minutes }).ok).toBe(false);
   });
 });
+
+// ---- Editing, per-set logging ----
+
+import {
+  addSetRow,
+  buildSetPayloads,
+  formFromTemplate,
+  setRowsForTemplate,
+  summarizeSets,
+} from "@/lib/workouts";
+import type { WorkoutSet, WorkoutTemplate } from "@/lib/types/api";
+
+const template: WorkoutTemplate = {
+  id: "t1",
+  name: "Upper Body",
+  description: null,
+  difficulty: "BEGINNER",
+  exercises: [
+    {
+      id: "e1",
+      exercise_name: "Push-ups",
+      exercise_type: "REPS",
+      category: "UPPER_BODY",
+      order_index: 0,
+      default_sets: 3,
+      default_reps: 12,
+      default_duration_seconds: null,
+      rest_seconds: 45,
+    },
+    {
+      id: "e2",
+      exercise_name: "Plank",
+      exercise_type: "TIME",
+      category: "CORE",
+      order_index: 1,
+      default_sets: 2,
+      default_reps: null,
+      default_duration_seconds: 30,
+      rest_seconds: 30,
+    },
+  ],
+};
+
+describe("editing a workout", () => {
+  it("fills the form from the saved workout, keeping exercise ids", () => {
+    const form = formFromTemplate(template);
+    expect(form.name).toBe("Upper Body");
+    expect(form.description).toBe("");
+    expect(form.exercises.map((e) => e.id)).toEqual(["e1", "e2"]);
+    expect(form.exercises[1]).toMatchObject({ type: "TIME", seconds: "30", reps: "", sets: "2", rest: "30" });
+  });
+
+  it("sends the ids back so existing exercises keep their history", () => {
+    const result = buildTemplatePayload(formFromTemplate(template));
+    if (!result.ok) throw new Error(result.error);
+    expect(result.payload.exercises.map((e) => e.id)).toEqual(["e1", "e2"]);
+    expect(result.payload.exercises[1]).not.toHaveProperty("default_reps");
+  });
+
+  it("leaves the id out for a new exercise", () => {
+    const form = formFromTemplate(template);
+    form.exercises.push({ ...emptyExercise("new"), name: "Squats" });
+    const result = buildTemplatePayload(form);
+    if (!result.ok) throw new Error(result.error);
+    expect(result.payload.exercises[2]).not.toHaveProperty("id");
+  });
+
+  it("still checks the edited values", () => {
+    const form = formFromTemplate(template);
+    form.exercises[0].reps = "0";
+    expect(buildTemplatePayload(form).ok).toBe(false);
+    form.exercises[0].reps = "12";
+    form.name = "   ";
+    expect(buildTemplatePayload(form).ok).toBe(false);
+  });
+});
+
+describe("per-set rows", () => {
+  it("makes one unticked row per planned set, starting from the plan's numbers", () => {
+    const rows = setRowsForTemplate(template);
+    expect(rows.map((r) => [r.exerciseName, r.setNumber, r.done])).toEqual([
+      ["Push-ups", 1, false],
+      ["Push-ups", 2, false],
+      ["Push-ups", 3, false],
+      ["Plank", 1, false],
+      ["Plank", 2, false],
+    ]);
+    expect(rows[0].reps).toBe("12");
+    expect(rows[3]).toMatchObject({ reps: "", seconds: "30" });
+  });
+
+  it("adds a set after the exercise's last one, copying its numbers", () => {
+    const rows = setRowsForTemplate(template);
+    rows[2].reps = "9";
+    const more = addSetRow(rows, template, "e1");
+    if (!more) throw new Error("expected a row");
+    expect(more.map((r) => `${r.exerciseName}${r.setNumber}`)).toEqual([
+      "Push-ups1",
+      "Push-ups2",
+      "Push-ups3",
+      "Push-ups4",
+      "Plank1",
+      "Plank2",
+    ]);
+    expect(more[3].reps).toBe("9");
+    expect(more[3].done).toBe(false);
+  });
+
+  it("stops adding sets at 100", () => {
+    let rows = setRowsForTemplate(template);
+    rows = rows.map((r) => (r.key === "e1-3" ? { ...r, setNumber: 100 } : r));
+    expect(addSetRow(rows, template, "e1")).toBeNull();
+  });
+});
+
+describe("buildSetPayloads", () => {
+  it("records only the ticked sets", () => {
+    const rows = setRowsForTemplate(template);
+    rows[0].done = true;
+    rows[1].done = true;
+    rows[1].reps = "10";
+    const result = buildSetPayloads(rows);
+    expect(result).toEqual({
+      ok: true,
+      sets: [
+        { exercise_id: "e1", set_number: 1, repetitions: 12, completed: true },
+        { exercise_id: "e1", set_number: 2, repetitions: 10, completed: true },
+      ],
+    });
+  });
+
+  it("sends nothing for a workout where no set was ticked", () => {
+    expect(buildSetPayloads(setRowsForTemplate(template))).toEqual({ ok: true, sets: [] });
+  });
+
+  it("treats a blank number as not recorded, never zero", () => {
+    const rows = setRowsForTemplate(template);
+    rows[0].done = true;
+    rows[0].reps = "  ";
+    const result = buildSetPayloads(rows);
+    if (!result.ok) throw new Error(result.error);
+    expect(result.sets[0]).not.toHaveProperty("repetitions");
+  });
+
+  it("keeps only the numbers that fit the exercise type", () => {
+    const rows = setRowsForTemplate(template);
+    rows[0].seconds = "99"; // reps exercise: seconds ignored
+    rows[0].done = true;
+    rows[3].reps = "50"; // timed exercise: reps ignored
+    rows[3].done = true;
+    const result = buildSetPayloads(rows);
+    if (!result.ok) throw new Error(result.error);
+    expect(result.sets[0]).toEqual({ exercise_id: "e1", set_number: 1, repetitions: 12, completed: true });
+    expect(result.sets[1]).toEqual({ exercise_id: "e2", set_number: 1, duration_seconds: 30, completed: true });
+  });
+
+  it("allows zero reps but refuses nonsense, naming the set", () => {
+    const rows = setRowsForTemplate(template);
+    rows[0].done = true;
+    rows[0].reps = "0";
+    expect(buildSetPayloads(rows).ok).toBe(true);
+    for (const bad of ["abc", "-1", "1.5", "1001"]) {
+      rows[0].reps = bad;
+      const result = buildSetPayloads(rows);
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.error).toContain("Push-ups, set 1");
+    }
+    rows[0].reps = "10";
+    rows[3].done = true;
+    rows[3].seconds = "7201";
+    expect(buildSetPayloads(rows).ok).toBe(false);
+  });
+
+  it("ignores a bad number on a set that wasn't ticked", () => {
+    const rows = setRowsForTemplate(template);
+    rows[0].reps = "abc";
+    expect(buildSetPayloads(rows)).toEqual({ ok: true, sets: [] });
+  });
+});
+
+describe("sessions with sets", () => {
+  const base = {
+    templateId: "t1",
+    date: "2026-03-10",
+    startTime: "08:00",
+    minutes: "30",
+    notes: "",
+    timeZone: "UTC",
+    now: new Date("2026-03-11T00:00:00Z"),
+  };
+
+  it("includes sets only when there are some", () => {
+    const sets = [{ exercise_id: "e1", set_number: 1, repetitions: 12, completed: true as const }];
+    const withSets = buildSessionPayload({ ...base, sets });
+    if (!withSets.ok) throw new Error(withSets.error);
+    expect(withSets.payload.sets).toEqual(sets);
+    const without = buildSessionPayload({ ...base, sets: [] });
+    if (!without.ok) throw new Error(without.error);
+    expect(without.payload).not.toHaveProperty("sets");
+  });
+});
+
+describe("summarizeSets", () => {
+  const set = (over: Partial<WorkoutSet>): WorkoutSet => ({
+    exercise_id: "e1",
+    exercise_name: "Push-ups",
+    set_number: 1,
+    repetitions: null,
+    duration_seconds: null,
+    completed: true,
+    ...over,
+  });
+
+  it("groups by exercise and lists the numbers", () => {
+    expect(
+      summarizeSets([
+        set({ set_number: 1, repetitions: 12 }),
+        set({ set_number: 2, repetitions: 10 }),
+        set({ exercise_name: "Plank", set_number: 1, duration_seconds: 30 }),
+      ]),
+    ).toEqual(["Push-ups: 2 sets (12, 10 reps)", "Plank: 1 set (30 s)"]);
+  });
+
+  it("counts a set with no numbers and skips sets that weren't completed", () => {
+    expect(
+      summarizeSets([set({}), set({ set_number: 2, completed: false, repetitions: 5 })]),
+    ).toEqual(["Push-ups: 1 set"]);
+  });
+
+  it("still reads well when the exercise was removed", () => {
+    expect(summarizeSets([set({ exercise_id: null, exercise_name: null, repetitions: 8 })])).toEqual([
+      "Exercise: 1 set (8 reps)",
+    ]);
+  });
+
+  it("is empty with no sets", () => {
+    expect(summarizeSets([])).toEqual([]);
+  });
+});

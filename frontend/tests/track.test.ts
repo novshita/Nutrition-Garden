@@ -172,3 +172,20 @@ describe("buildSleepPayload", () => {
     expect(buildSleepPayload({ ...times(), notes: "x".repeat(501) }, "2026-03-11", "UTC").ok).toBe(false);
   });
 });
+
+import { describeWater } from "@/lib/track";
+
+describe("describeWater", () => {
+  it("invites a first glass", () => {
+    expect(describeWater(0, 2000, "METRIC")).toMatch(/lovely place to start/);
+  });
+  it("says how much is left, in the person's units", () => {
+    expect(describeWater(750, 2000, "METRIC")).toBe("1.25 L still to sip today.");
+    expect(describeWater(1500, 2000, "METRIC")).toBe("500 ml still to sip today.");
+    expect(describeWater(1500, 2000, "IMPERIAL")).toBe("17 fl oz still to sip today.");
+  });
+  it("celebrates reaching it, and going over is fine", () => {
+    expect(describeWater(2000, 2000, "METRIC")).toMatch(/reached today's water goal/);
+    expect(describeWater(3500, 2000, "METRIC")).toMatch(/reached today's water goal/);
+  });
+});

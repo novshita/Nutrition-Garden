@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatSeconds } from "@/lib/format";
 import type { WorkoutSession } from "@/lib/types/api";
+import { summarizeSets } from "@/lib/workouts";
 
 const when = (iso: string, timeZone: string) =>
   new Date(iso).toLocaleString("en-US", {
@@ -31,6 +32,11 @@ export function SessionList({ sessions, timeZone }: { sessions: WorkoutSession[]
                 · {when(session.started_at, timeZone)} · {formatSeconds(session.duration_seconds)}
                 {session.estimated_calories !== null && ` · about ${session.estimated_calories} kcal`}
               </span>
+              {summarizeSets(session.sets).map((line) => (
+                <p key={line} className="text-muted-foreground">
+                  {line}
+                </p>
+              ))}
               {session.notes && <p className="text-muted-foreground">{session.notes}</p>}
             </li>
           ))}

@@ -105,6 +105,9 @@ class WorkoutSession(Base):
     template_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("workout_template.id", ondelete="SET NULL")
     )
+    # The workout's name when it was recorded, so history still reads well after the template is
+    # renamed or deleted.
+    template_name: Mapped[str | None] = mapped_column(String(100))
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     duration_seconds: Mapped[int] = mapped_column(Integer)
@@ -137,6 +140,8 @@ class WorkoutSet(Base):
     exercise_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("workout_exercise.id", ondelete="SET NULL")
     )
+    # The exercise's name when the set was recorded (same reason as WorkoutSession.template_name).
+    exercise_name: Mapped[str | None] = mapped_column(String(100))
     set_number: Mapped[int] = mapped_column(Integer)
     repetitions: Mapped[int | None] = mapped_column(Integer)
     duration_seconds: Mapped[int | None] = mapped_column(Integer)

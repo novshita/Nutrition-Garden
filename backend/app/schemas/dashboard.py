@@ -55,6 +55,7 @@ class DayOverview(BaseModel):
     protein: ProteinOverview
     nutrition: NutritionTotalsOut
     water_ml: int
+    water_target_ml: int
     sleep_minutes: int | None
     steps: int | None
     mood: Mood | None

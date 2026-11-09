@@ -94,6 +94,7 @@ export type DayOverview = {
   protein: { consumed_g: number | null; target_g: number | null };
   nutrition: NutritionTotals;
   water_ml: number;
+  water_target_ml: number;
   sleep_minutes: number | null;
   steps: number | null;
   mood: Mood | null;
@@ -182,7 +183,7 @@ export type DailyNutrition = {
 };
 
 export type WaterEntry = { id: string; consumed_at: string; amount_ml: number };
-export type WaterDay = { date: string; total_ml: number; entries: WaterEntry[] };
+export type WaterDay = { date: string; total_ml: number; target_ml: number; entries: WaterEntry[] };
 
 export type SleepLog = {
   sleep_date: string;
@@ -269,13 +270,17 @@ export type WorkoutSession = {
   /** A rough estimate for information only; it never changes the food goal. */
   estimated_calories: number | null;
   notes: string | null;
-  sets: {
-    exercise_id: string | null;
-    set_number: number;
-    repetitions: number | null;
-    duration_seconds: number | null;
-    completed: boolean;
-  }[];
+  sets: WorkoutSet[];
+};
+
+/** One recorded set. The name is kept so history still reads well if the workout is edited or deleted. */
+export type WorkoutSet = {
+  exercise_id: string | null;
+  exercise_name: string | null;
+  set_number: number;
+  repetitions: number | null;
+  duration_seconds: number | null;
+  completed: boolean;
 };
 
 export type GardenItem = {
