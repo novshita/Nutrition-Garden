@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AppHeader } from "@/components/app-header";
+import { AccountCard } from "@/components/settings/account-card";
 import { ProfileSettingsForm } from "@/components/settings/profile-settings-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useProfile } from "@/hooks/use-profile";
@@ -61,6 +62,8 @@ export default function SettingsPage() {
           />
         </CardContent>
       </Card>
+
+      <AccountCard user={user} />
     </div>
   );
 }

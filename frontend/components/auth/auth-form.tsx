@@ -8,9 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api, ApiError } from "@/lib/api/client";
+import { MIN_PASSWORD_LENGTH } from "@/lib/account";
 import type { User } from "@/lib/types/api";
 
-const MIN_PASSWORD_LENGTH = 8;
 
 export function AuthForm({ mode }: { mode: "login" | "register" }) {
   const router = useRouter();

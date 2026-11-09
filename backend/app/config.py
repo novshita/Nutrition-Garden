@@ -21,6 +21,11 @@ ACTIVITY_MULTIPLIERS: dict[ActivityLevel, float] = {
 SESSION_COOKIE_NAME = "garden_session"
 SESSION_LIFETIME_DAYS = 30
 
+# Slowing down password guessing: after this many wrong passwords for one account within the window,
+# further attempts are refused until the oldest of them ages out. A correct password resets the count.
+LOGIN_MAX_FAILURES = 5
+LOGIN_FAILURE_WINDOW_MINUTES = 15
+
 # Bounds for a user-set calorie target (spec §42: no extreme restriction, no unsafe gain).
 MIN_CALORIE_TARGET_KCAL = 1200
 MAX_CALORIE_TARGET_KCAL = 6000

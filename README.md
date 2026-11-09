@@ -117,6 +117,8 @@ message, and everything else keeps working: AI is an enhancement layer, never a 
 
 Every feature the specs define is built, on both sides.
 
+- **Account security:** password change (signs out other devices), display-name editing, and a limit on
+  wrong passwords (`LOGIN_MAX_FAILURES` per `LOGIN_FAILURE_WINDOW_MINUTES` in `backend/app/config.py`).
 - **Backend:** all endpoints, including AI (`/api/v1/ai/*`, `/api/v1/memory`), achievements
   (`/api/v1/garden/achievements`) and recipes (`/api/v1/recipes`).
 - **Frontend:** every screen is built in a basic, restyle-friendly form. Colours live in

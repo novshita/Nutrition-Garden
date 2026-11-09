@@ -7,7 +7,7 @@ from datetime import UTC, datetime, timedelta
 
 from argon2 import PasswordHasher
 from argon2.exceptions import InvalidHashError, VerificationError
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.config import SESSION_LIFETIME_DAYS, get_settings
@@ -79,3 +79,11 @@ def delete_session(db: Session, token: str) -> None:
     if session is not None:
         db.delete(session)
         db.flush()
+
+
+def delete_other_sessions(db: Session, user: User, keep_token: str | None) -> None:
+    """Sign the account out everywhere except the session making this request."""
+    stmt = delete(AuthSession).where(AuthSession.user_id == user.id)
+    if keep_token:
+        stmt = stmt.where(AuthSession.token_hash != _hash_token(keep_token))
+    db.execute(stmt)
