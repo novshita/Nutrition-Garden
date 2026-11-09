@@ -7,6 +7,7 @@ from datetime import date
 
 from sqlalchemy.orm import Session
 
+from app.config import WATER_TARGET_ML
 from app.models import User
 from app.schemas.dashboard import (
     CaloriesOverview,
@@ -57,6 +58,7 @@ def build_overview(db: Session, user: User, day: date) -> DayOverview:
         protein=ProteinOverview(consumed_g=totals.protein_g),
         nutrition=food_logging.totals_out(totals),
         water_ml=daily.get_water_day(db, user, day).total_ml,
+        water_target_ml=WATER_TARGET_ML,
         sleep_minutes=sleep.duration_minutes if sleep else None,
         steps=steps.steps if steps else None,
         mood=mood.mood if mood else None,

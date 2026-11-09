@@ -119,6 +119,8 @@ Every feature the specs define is built, on both sides.
 
 - **Account security:** password change (signs out other devices), display-name editing, and a limit on
   wrong passwords (`LOGIN_MAX_FAILURES` per `LOGIN_FAILURE_WINDOW_MINUTES` in `backend/app/config.py`).
+- **Workouts:** templates can be edited and deleted (recorded sessions keep their names), and a session can
+  record each set. **Water:** a 2 L daily goal (`WATER_TARGET_ML` in `backend/app/config.py`), shown as progress.
 - **Backend:** all endpoints, including AI (`/api/v1/ai/*`, `/api/v1/memory`), achievements
   (`/api/v1/garden/achievements`) and recipes (`/api/v1/recipes`).
 - **Frontend:** every screen is built in a basic, restyle-friendly form. Colours live in

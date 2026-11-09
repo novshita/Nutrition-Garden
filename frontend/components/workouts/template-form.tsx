@@ -25,8 +25,17 @@ const newForm = (): TemplateForm => ({
   exercises: [emptyExercise(crypto.randomUUID())],
 });
 
-export function TemplateFormView({ onCreated }: { onCreated: () => void }) {
-  const [form, setForm] = useState<TemplateForm>(newForm);
+/** Create a workout, or (with `editing`) change one that exists. */
+export function TemplateFormView({
+  onSaved,
+  editing,
+  onCancel,
+}: {
+  onSaved: () => void;
+  editing?: { id: string; form: TemplateForm };
+  onCancel?: () => void;
+}) {
+  const [form, setForm] = useState<TemplateForm>(() => editing?.form ?? newForm());
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -46,9 +55,13 @@ export function TemplateFormView({ onCreated }: { onCreated: () => void }) {
     setBusy(true);
     setError(null);
     try {
-      await api("/workouts/templates", { method: "POST", body: result.payload });
-      setForm(newForm());
-      onCreated();
+      if (editing) {
+        await api(`/workouts/templates/${editing.id}`, { method: "PUT", body: result.payload });
+      } else {
+        await api("/workouts/templates", { method: "POST", body: result.payload });
+        setForm(newForm());
+      }
+      onSaved();
     } catch (caught) {
       setError(caught instanceof ApiError ? caught.message : "Something went wrong.");
     } finally {
@@ -59,22 +72,24 @@ export function TemplateFormView({ onCreated }: { onCreated: () => void }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Create a workout</CardTitle>
+        <CardTitle>{editing ? "Edit workout" : "Create a workout"}</CardTitle>
         <CardDescription>
-          Home-friendly moves work best: bodyweight, cardio, mobility, stretching. No equipment needed.
+          {editing
+            ? "Changes apply from now on. Workouts you've already recorded keep the names they had."
+            : "Home-friendly moves work best: bodyweight, cardio, mobility, stretching. No equipment needed."}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
           <div className="flex flex-wrap gap-3">
             <div className="flex min-w-48 flex-1 flex-col gap-1">
-              <Label htmlFor="tpl-name">Name</Label>
-              <Input id="tpl-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+              <Label htmlFor={`tpl-name-${editing?.id ?? "new"}`}>Name</Label>
+              <Input id={`tpl-name-${editing?.id ?? "new"}`} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             </div>
             <div className="flex flex-col gap-1">
-              <Label htmlFor="tpl-difficulty">Difficulty</Label>
+              <Label htmlFor={`tpl-difficulty-${editing?.id ?? "new"}`}>Difficulty</Label>
               <NativeSelect
-                id="tpl-difficulty"
+                id={`tpl-difficulty-${editing?.id ?? "new"}`}
                 value={form.difficulty}
                 onChange={(e) => setForm({ ...form, difficulty: e.target.value as Difficulty })}
               >
@@ -87,9 +102,9 @@ export function TemplateFormView({ onCreated }: { onCreated: () => void }) {
             </div>
           </div>
           <div className="flex flex-col gap-1">
-            <Label htmlFor="tpl-desc">Description (optional)</Label>
+            <Label htmlFor={`tpl-desc-${editing?.id ?? "new"}`}>Description (optional)</Label>
             <Input
-              id="tpl-desc"
+              id={`tpl-desc-${editing?.id ?? "new"}`}
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
             />
@@ -188,9 +203,16 @@ export function TemplateFormView({ onCreated }: { onCreated: () => void }) {
           <p role="alert" className="min-h-5 text-sm text-destructive">
             {error}
           </p>
-          <Button type="submit" disabled={busy} className="self-start">
-            {busy ? "Saving…" : "Save workout"}
-          </Button>
+          <div className="flex gap-2">
+            <Button type="submit" disabled={busy}>
+              {busy ? "Saving…" : editing ? "Save changes" : "Save workout"}
+            </Button>
+            {editing && (
+              <Button type="button" variant="outline" onClick={onCancel} disabled={busy}>
+                Cancel
+              </Button>
+            )}
+          </div>
         </form>
       </CardContent>
     </Card>

@@ -8,6 +8,8 @@ import type {
   ExerciseType,
   ScheduleDay,
   Weekday,
+  WorkoutSet,
+  WorkoutTemplate,
 } from "@/lib/types/api";
 
 export const WEEKDAYS: { value: Weekday; label: string }[] = [
@@ -52,6 +54,8 @@ const LIMITS = { sets: 50, reps: 1000, seconds: 7200, rest: 3600, exercises: 50,
 
 export type ExerciseForm = {
   key: string;
+  /** Set when editing an exercise that already exists, so its history stays attached. */
+  id?: string;
   name: string;
   type: ExerciseType;
   category: ExerciseCategory;
@@ -80,6 +84,7 @@ export const emptyExercise = (key: string): ExerciseForm => ({
 });
 
 export type ExercisePayload = {
+  id?: string;
   exercise_name: string;
   exercise_type: ExerciseType;
   category: ExerciseCategory;
@@ -126,6 +131,7 @@ export function buildTemplatePayload(
     if (rest === null) return { ok: false, error: `${label}: rest should be 0 to ${LIMITS.rest} seconds.` };
 
     const item: ExercisePayload = {
+      ...(exercise.id ? { id: exercise.id } : {}),
       exercise_name: exercise.name.trim(),
       exercise_type: exercise.type,
       category: exercise.category,
@@ -149,6 +155,26 @@ export function buildTemplatePayload(
   const payload: TemplatePayload = { name, difficulty: form.difficulty, exercises };
   if (form.description.trim()) payload.description = form.description.trim();
   return { ok: true, payload };
+}
+
+/** The editable form for an existing workout. Exercises keep their ids. */
+export function formFromTemplate(template: WorkoutTemplate): TemplateForm {
+  return {
+    name: template.name,
+    description: template.description ?? "",
+    difficulty: template.difficulty,
+    exercises: template.exercises.map((e) => ({
+      key: e.id,
+      id: e.id,
+      name: e.exercise_name,
+      type: e.exercise_type,
+      category: e.category,
+      sets: String(e.default_sets),
+      reps: e.default_reps === null ? "" : String(e.default_reps),
+      seconds: e.default_duration_seconds === null ? "" : String(e.default_duration_seconds),
+      rest: String(e.rest_seconds),
+    })),
+  };
 }
 
 /** "3 × 10 reps", "3 × 30 s", or "3 × 10 reps for 30 s". */
@@ -198,12 +224,108 @@ export function scheduleToPayload(selection: ScheduleSelection): ScheduleDayPayl
 
 // Recording a session -----------------------------------------------------------------------
 
+export type SetPayload = {
+  exercise_id: string;
+  set_number: number;
+  repetitions?: number;
+  duration_seconds?: number;
+  completed: true;
+};
+
 export type SessionPayload = {
   template_id?: string;
   started_at: string;
   completed_at: string;
   notes?: string;
+  sets?: SetPayload[];
 };
+
+/** One row in the optional "track each set" list. Rows start unticked; only ticked sets are recorded. */
+export type SetRow = {
+  key: string;
+  exerciseId: string;
+  exerciseName: string;
+  type: ExerciseType;
+  setNumber: number;
+  done: boolean;
+  reps: string;
+  seconds: string;
+};
+
+const MAX_SET_NUMBER = 100;
+
+const rowFor = (
+  exercise: WorkoutTemplate["exercises"][number],
+  setNumber: number,
+): SetRow => ({
+  key: `${exercise.id}-${setNumber}`,
+  exerciseId: exercise.id,
+  exerciseName: exercise.exercise_name,
+  type: exercise.exercise_type,
+  setNumber,
+  done: false,
+  // The plan's numbers are a starting point; change them to what you actually did.
+  reps: exercise.default_reps === null ? "" : String(exercise.default_reps),
+  seconds: exercise.default_duration_seconds === null ? "" : String(exercise.default_duration_seconds),
+});
+
+export function setRowsForTemplate(template: WorkoutTemplate): SetRow[] {
+  return template.exercises.flatMap((exercise) =>
+    Array.from({ length: exercise.default_sets }, (_, i) => rowFor(exercise, i + 1)),
+  );
+}
+
+/** One more set for an exercise, numbered after its last one. Null once it hits the limit. */
+export function addSetRow(rows: SetRow[], template: WorkoutTemplate, exerciseId: string): SetRow[] | null {
+  const exercise = template.exercises.find((e) => e.id === exerciseId);
+  if (!exercise) return rows;
+  const mine = rows.filter((r) => r.exerciseId === exerciseId);
+  const next = Math.max(0, ...mine.map((r) => r.setNumber)) + 1;
+  if (next > MAX_SET_NUMBER) return null;
+  const last = rows.findLastIndex((r) => r.exerciseId === exerciseId);
+  const added = { ...rowFor(exercise, next), reps: mine.at(-1)?.reps ?? "", seconds: mine.at(-1)?.seconds ?? "" };
+  return [...rows.slice(0, last + 1), added, ...rows.slice(last + 1)];
+}
+
+/** The ticked sets as the API expects them. A blank number is "not recorded", never zero. */
+export function buildSetPayloads(
+  rows: SetRow[],
+): { ok: true; sets: SetPayload[] } | { ok: false; error: string } {
+  const sets: SetPayload[] = [];
+  for (const row of rows.filter((r) => r.done)) {
+    const where = `${row.exerciseName}, set ${row.setNumber}`;
+    const set: SetPayload = { exercise_id: row.exerciseId, set_number: row.setNumber, completed: true };
+    if (row.type !== "TIME" && row.reps.trim() !== "") {
+      const reps = wholeNumber(row.reps, 0, LIMITS.reps);
+      if (reps === null) return { ok: false, error: `${where}: reps should be a whole number from 0 to ${LIMITS.reps}.` };
+      set.repetitions = reps;
+    }
+    if (row.type !== "REPS" && row.seconds.trim() !== "") {
+      const seconds = wholeNumber(row.seconds, 0, LIMITS.seconds);
+      if (seconds === null) return { ok: false, error: `${where}: time should be 0 to ${LIMITS.seconds} seconds.` };
+      set.duration_seconds = seconds;
+    }
+    sets.push(set);
+  }
+  return { ok: true, sets };
+}
+
+/** "Push-ups: 3 sets (12, 10, 8 reps)", one line per exercise, for the workout history. */
+export function summarizeSets(sets: WorkoutSet[]): string[] {
+  const groups = new Map<string, WorkoutSet[]>();
+  for (const set of sets.filter((s) => s.completed)) {
+    const name = set.exercise_name ?? "Exercise";
+    groups.set(name, [...(groups.get(name) ?? []), set]);
+  }
+  return [...groups].map(([name, list]) => {
+    const reps = list.flatMap((s) => (s.repetitions === null ? [] : [s.repetitions]));
+    const seconds = list.flatMap((s) => (s.duration_seconds === null ? [] : [s.duration_seconds]));
+    const details = [reps.length ? `${reps.join(", ")} reps` : "", seconds.length ? `${seconds.join(", ")} s` : ""]
+      .filter(Boolean)
+      .join("; ");
+    return `${name}: ${list.length} ${list.length === 1 ? "set" : "sets"}${details ? ` (${details})` : ""}`;
+  });
+}
 
 export function buildSessionPayload(input: {
   templateId: string;
@@ -212,6 +334,7 @@ export function buildSessionPayload(input: {
   minutes: string;
   notes: string;
   timeZone: string;
+  sets?: SetPayload[];
   now?: Date;
 }): { ok: true; payload: SessionPayload } | { ok: false; error: string } {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(input.date)) return { ok: false, error: "Please choose a day." };
@@ -235,5 +358,6 @@ export function buildSessionPayload(input: {
   const payload: SessionPayload = { started_at: started, completed_at: completed.toISOString() };
   if (input.templateId) payload.template_id = input.templateId;
   if (notes) payload.notes = notes;
+  if (input.sets && input.sets.length > 0) payload.sets = input.sets;
   return { ok: true, payload };
 }

@@ -44,6 +44,28 @@ class TemplateCreate(BaseModel):
     exercises: list[ExerciseIn] = Field(min_length=1, max_length=50)
 
 
+class ExerciseUpdate(ExerciseIn):
+    """An exercise in an edited workout. With an id it is an existing exercise, kept as it is."""
+
+    id: uuid.UUID | None = None
+
+
+class TemplateUpdate(BaseModel):
+    """The whole workout as it should now be. Exercises left out are removed."""
+
+    name: str = Field(min_length=1, max_length=100)
+    description: str | None = Field(default=None, max_length=500)
+    difficulty: Difficulty
+    exercises: list[ExerciseUpdate] = Field(min_length=1, max_length=50)
+
+    @model_validator(mode="after")
+    def _unique_ids(self) -> Self:
+        ids = [e.id for e in self.exercises if e.id is not None]
+        if len(set(ids)) != len(ids):
+            raise ValueError("An exercise can appear only once")
+        return self
+
+
 class ExerciseOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -135,6 +157,7 @@ class SetOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     exercise_id: uuid.UUID | None
+    exercise_name: str | None
     set_number: int
     repetitions: int | None
     duration_seconds: int | None
@@ -146,7 +169,7 @@ class SessionOut(BaseModel):
 
     id: uuid.UUID
     template_id: uuid.UUID | None
-    template_name: str | None = None  # filled in by the service from the template
+    template_name: str | None
     started_at: datetime
     completed_at: datetime | None
     duration_seconds: int

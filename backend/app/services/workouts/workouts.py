@@ -3,7 +3,7 @@
 import uuid
 from datetime import UTC, date
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.enums import GrowthAction, Weekday
@@ -21,6 +21,7 @@ from app.schemas.workouts import (
     SessionCreate,
     SessionOut,
     TemplateCreate,
+    TemplateUpdate,
 )
 from app.services import weight as weight_service
 from app.services.calculations.workouts import estimate_calories
@@ -32,6 +33,10 @@ WEEKDAYS = list(Weekday)  # Monday first
 
 
 class InvalidSetError(ValueError):
+    pass
+
+
+class InvalidExerciseError(ValueError):
     pass
 
 
@@ -62,6 +67,45 @@ def list_templates(db: Session, user: User) -> list[WorkoutTemplate]:
             .order_by(WorkoutTemplate.created_at.asc(), WorkoutTemplate.name.asc())
         )
     )
+
+
+def update_template(
+    db: Session, user: User, template_id: uuid.UUID, data: TemplateUpdate
+) -> WorkoutTemplate:
+    """Replace a workout with its edited form. Existing exercises keep their identity (and so their
+    history); new ones are added; ones left out are removed."""
+    template = _owned_template(db, user, template_id)
+    existing = {e.id: e for e in template.exercises}
+    if any(e.id is not None and e.id not in existing for e in data.exercises):
+        raise InvalidExerciseError("An exercise doesn't belong to this workout")
+
+    exercises: list[WorkoutExercise] = []
+    for index, item in enumerate(data.exercises):
+        fields = item.model_dump(exclude={"id"})
+        if item.id is not None:
+            row = existing[item.id]
+            for name, value in fields.items():
+                setattr(row, name, value)
+            row.order_index = index
+        else:
+            row = WorkoutExercise(order_index=index, **fields)
+        exercises.append(row)
+
+    template.name = data.name.strip()
+    template.description = data.description
+    template.difficulty = data.difficulty
+    template.exercises = exercises  # anything left out is deleted (delete-orphan)
+    db.flush()
+    return template
+
+
+def delete_template(db: Session, user: User, template_id: uuid.UUID) -> None:
+    """Remove a workout and take it out of the weekly plan. Recorded sessions stay, with their names."""
+    template = _owned_template(db, user, template_id)
+    db.execute(delete(WorkoutSchedule).where(WorkoutSchedule.template_id == template.id))
+    db.delete(template)
+    db.flush()
+    db.expire_all()
 
 
 def _owned_template(db: Session, user: User, template_id: uuid.UUID) -> WorkoutTemplate:
@@ -150,6 +194,7 @@ def create_session(db: Session, user: User, data: SessionCreate) -> WorkoutSessi
     session = WorkoutSession(
         user_id=user.id,
         template_id=template.id if template else None,
+        template_name=template.name if template else None,
         started_at=data.started_at.astimezone(UTC),
         completed_at=data.completed_at.astimezone(UTC),
         duration_seconds=duration,
@@ -160,6 +205,7 @@ def create_session(db: Session, user: User, data: SessionCreate) -> WorkoutSessi
         sets=[
             WorkoutSet(
                 exercise_id=s.exercise_id,
+                exercise_name=exercises[s.exercise_id].exercise_name,
                 set_number=s.set_number,
                 repetitions=s.repetitions,
                 duration_seconds=s.duration_seconds,
@@ -190,6 +236,5 @@ def list_sessions(
 
 def session_out(session: WorkoutSession) -> SessionOut:
     out = SessionOut.model_validate(session)
-    out.template_name = session.template.name if session.template else None
     out.sets.sort(key=lambda s: s.set_number)  # a just-created session isn't reloaded in order
     return out

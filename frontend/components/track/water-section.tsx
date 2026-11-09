@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ProgressBar } from "@/components/ui/progress-bar";
 import { useApi } from "@/hooks/use-api";
 import { api, ApiError } from "@/lib/api/client";
-import { formatVolume, waterQuickAmounts } from "@/lib/format";
-import { waterAmountMl, zonedInstantIso } from "@/lib/track";
+import { formatVolume, percentOf, waterQuickAmounts } from "@/lib/format";
+import { describeWater, waterAmountMl, zonedInstantIso } from "@/lib/track";
 import type { UnitSystem, WaterDay } from "@/lib/types/api";
 
 const timeOf = (iso: string) =>
@@ -73,10 +74,23 @@ export function WaterSection({
       <CardHeader>
         <CardTitle>Water</CardTitle>
         <CardDescription>
-          {water.data ? `${formatVolume(water.data.total_ml, unit)} so far` : "Loading…"}
+          {water.data
+            ? `${formatVolume(water.data.total_ml, unit)} of ${formatVolume(water.data.target_ml, unit)}`
+            : "Loading…"}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
+        {water.data && (
+          <>
+            <ProgressBar
+              value={percentOf(water.data.total_ml, water.data.target_ml) ?? 0}
+              label="Water toward today's goal"
+            />
+            <p className="text-sm text-muted-foreground">
+              {describeWater(water.data.total_ml, water.data.target_ml, unit)}
+            </p>
+          </>
+        )}
         <div className="flex flex-wrap gap-2">
           {waterQuickAmounts(unit).map((amount) => (
             <Button key={amount.ml} type="button" variant="outline" disabled={busy} onClick={() => add(amount.ml)}>

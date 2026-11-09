@@ -7,6 +7,7 @@ from typing import TypeVar
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.config import WATER_TARGET_ML
 from app.enums import GrowthAction
 from app.models import DailyActivity, MoodLog, SleepLog, User, WaterLog
 from app.schemas.daily import MoodUpdate, SleepUpdate, WaterDay
@@ -70,7 +71,12 @@ def get_water_day(db: Session, user: User, day: date) -> WaterDay:
             .order_by(WaterLog.consumed_at.asc())
         )
     )
-    return WaterDay(date=day, total_ml=sum(e.amount_ml for e in entries), entries=entries)
+    return WaterDay(
+        date=day,
+        total_ml=sum(e.amount_ml for e in entries),
+        target_ml=WATER_TARGET_ML,
+        entries=entries,
+    )
 
 
 def delete_water(db: Session, user: User, entry_id: uuid.UUID) -> None:

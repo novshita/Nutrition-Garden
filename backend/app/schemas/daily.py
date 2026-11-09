@@ -37,6 +37,7 @@ class WaterEntry(BaseModel):
 class WaterDay(BaseModel):
     date: date
     total_ml: int
+    target_ml: int
     entries: list[WaterEntry]
 
 

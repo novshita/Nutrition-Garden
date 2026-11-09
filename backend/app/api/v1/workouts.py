@@ -1,3 +1,4 @@
+import uuid
 from datetime import date
 
 from fastapi import APIRouter, HTTPException, Query, status
@@ -10,6 +11,7 @@ from app.schemas.workouts import (
     SessionOut,
     TemplateCreate,
     TemplateOut,
+    TemplateUpdate,
 )
 from app.services.errors import NotFoundError
 from app.services.workouts import workouts as service
@@ -28,6 +30,30 @@ def create_template(body: TemplateCreate, user: CurrentUser, db: DbSession) -> T
 @router.get("/templates", response_model=list[TemplateOut])
 def list_templates(user: CurrentUser, db: DbSession) -> list[TemplateOut]:
     return service.list_templates(db, user)
+
+
+@router.put("/templates/{template_id}", response_model=TemplateOut)
+def update_template(
+    template_id: uuid.UUID, body: TemplateUpdate, user: CurrentUser, db: DbSession
+) -> TemplateOut:
+    try:
+        template = service.update_template(db, user, template_id, body)
+    except NotFoundError:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Workout template not found") from None
+    except service.InvalidExerciseError as exc:
+        raise HTTPException(422, str(exc)) from None
+    out = TemplateOut.model_validate(template)
+    db.commit()
+    return out
+
+
+@router.delete("/templates/{template_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_template(template_id: uuid.UUID, user: CurrentUser, db: DbSession) -> None:
+    try:
+        service.delete_template(db, user, template_id)
+    except NotFoundError:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Workout template not found") from None
+    db.commit()
 
 
 @router.get("/schedule", response_model=list[ScheduleDayOut])
