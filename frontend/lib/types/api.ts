@@ -87,11 +87,33 @@ export type CompletedWorkout = {
   estimated_calories: number | null;
 };
 
+/** A gentle reminder of what many people aim for at this weight. Not a target. */
+export type ProteinGuide = {
+  weight_kg: number;
+  low_g_per_day: number;
+  high_g_per_day: number;
+  low_g_per_week: number;
+  high_g_per_week: number;
+};
+
+export type ProteinDay = { date: string; protein_g: number | null; foods_missing_protein: number };
+
+export type ProteinWeek = {
+  start_date: string;
+  end_date: string;
+  days: ProteinDay[];
+  total_g: number | null;
+  days_with_protein: number;
+  average_g_per_day: number | null;
+  foods_missing_protein: number;
+  guide: ProteinGuide | null;
+};
+
 /** One local day across every tracker; this is also the end-of-day summary. */
 export type DayOverview = {
   date: string;
   calories: { consumed: number | null; target: number | null; remaining: number | null };
-  protein: { consumed_g: number | null; target_g: number | null };
+  protein: { consumed_g: number | null; guide: ProteinGuide | null };
   nutrition: NutritionTotals;
   water_ml: number;
   water_target_ml: number;

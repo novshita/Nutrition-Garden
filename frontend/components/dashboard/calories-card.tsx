@@ -2,6 +2,7 @@ import { ProgressBar } from "@/components/ui/progress-bar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatInt, percentOf } from "@/lib/format";
 import type { DayOverview } from "@/lib/types/api";
+import { guideShort } from "@/lib/protein";
 import { round } from "@/lib/units";
 
 export function CaloriesCard({ day }: { day: DayOverview }) {
@@ -34,6 +35,9 @@ export function CaloriesCard({ day }: { day: DayOverview }) {
             : `${proteinGaps > 0 ? "at least " : ""}${round(day.protein.consumed_g, 1)} g`}
           {proteinGaps > 0 && day.protein.consumed_g !== null && (
             <span className="text-muted-foreground"> (some foods have no protein data)</span>
+          )}
+          {day.protein.guide && (
+            <span className="text-muted-foreground"> · {guideShort(day.protein.guide)}</span>
           )}
         </p>
       </CardContent>

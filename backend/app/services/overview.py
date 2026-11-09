@@ -20,6 +20,7 @@ from app.schemas.dashboard import (
 )
 from app.services import daily, goals
 from app.services import weight as weight_service
+from app.services.calculations.protein import protein_guide
 from app.services.garden import garden as garden_service
 from app.services.nutrition import food_logging
 from app.services.timezone import get_timezone, local_day_bounds
@@ -42,6 +43,7 @@ def build_overview(db: Session, user: User, day: date) -> DayOverview:
     steps = daily.get_steps(db, user, day)
     mood = daily.get_mood(db, user, day)
     weights = weight_service.list_weights(db, user, day, day, 1000)
+    latest_weight = weight_service.get_latest(db, user)
 
     planned = workout_service.planned_workout_for(db, user, day)
     sessions = [
@@ -55,7 +57,10 @@ def build_overview(db: Session, user: User, day: date) -> DayOverview:
     return DayOverview(
         date=day,
         calories=CaloriesOverview(consumed=totals.calories, target=target_kcal, remaining=remaining),
-        protein=ProteinOverview(consumed_g=totals.protein_g),
+        protein=ProteinOverview(
+            consumed_g=totals.protein_g,
+            guide=protein_guide(float(latest_weight.weight_kg) if latest_weight else None),
+        ),
         nutrition=food_logging.totals_out(totals),
         water_ml=daily.get_water_day(db, user, day).total_ml,
         water_target_ml=WATER_TARGET_ML,

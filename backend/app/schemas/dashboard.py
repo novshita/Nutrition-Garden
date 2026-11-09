@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 from app.enums import GrowthAction, Mood, Weekday
 from app.schemas.food_log import NutritionTotalsOut
+from app.schemas.protein import ProteinGuide
 
 
 class CaloriesOverview(BaseModel):
@@ -16,8 +17,8 @@ class CaloriesOverview(BaseModel):
 
 class ProteinOverview(BaseModel):
     consumed_g: float | None
-    # No protein target is defined in the specs yet, so this is always null for now.
-    target_g: float | None = None
+    # A gentle reminder for this body weight, never a target.
+    guide: ProteinGuide | None = None
 
 
 class PlannedWorkout(BaseModel):

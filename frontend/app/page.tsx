@@ -4,13 +4,14 @@ import { AppHeader } from "@/components/app-header";
 import { NudgeBanner } from "@/components/dashboard/nudge-banner";
 import { CaloriesCard } from "@/components/dashboard/calories-card";
 import { DayTiles } from "@/components/dashboard/day-tiles";
+import { ProteinWeekCard } from "@/components/dashboard/protein-week-card";
 import { WorkoutCard } from "@/components/dashboard/workout-card";
 import { GardenCard } from "@/components/garden/garden-card";
 import { useApi } from "@/hooks/use-api";
 import { useProfile } from "@/hooks/use-profile";
 import { useSession } from "@/hooks/use-session";
 import { formatLongDate } from "@/lib/format";
-import type { DayOverview, Garden } from "@/lib/types/api";
+import type { DayOverview, Garden, ProteinWeek } from "@/lib/types/api";
 
 export default function HomePage() {
   const { user, loading, error, signOut } = useSession();
@@ -18,6 +19,7 @@ export default function HomePage() {
   const ready = profile.data !== null;
   const dashboard = useApi<DayOverview>(ready ? "/dashboard/today" : null);
   const garden = useApi<Garden>(ready ? "/garden" : null);
+  const protein = useApi<ProteinWeek>(ready ? "/nutrition/protein/week" : null);
 
   if (loading || (!user && error?.status === 401)) {
     return <p className="m-auto text-muted-foreground">Opening your garden…</p>;
@@ -35,6 +37,7 @@ export default function HomePage() {
   const refresh = () => {
     dashboard.reload();
     garden.reload();
+    protein.reload();
   };
   const day = dashboard.data;
 
@@ -54,6 +57,9 @@ export default function HomePage() {
       {day ? (
         <>
           <CaloriesCard day={day} />
+          {protein.data && (
+            <ProteinWeekCard week={protein.data} unit={profile.data.profile.preferred_unit_system} />
+          )}
           <DayTiles
             day={day}
             unit={profile.data.profile.preferred_unit_system}

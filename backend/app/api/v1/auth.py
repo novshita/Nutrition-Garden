@@ -8,6 +8,7 @@ from app.api.deps import CurrentUser, DbSession, get_now
 from app.config import SESSION_COOKIE_NAME, SESSION_LIFETIME_DAYS, get_settings
 from app.models import User
 from app.schemas.auth import (
+    AccountDelete,
     DisplayNameUpdate,
     LoginRequest,
     PasswordChange,
@@ -129,3 +130,25 @@ def change_password(
     auth_service.delete_other_sessions(db, user, token)
     throttle.clear(db, key)
     db.commit()
+
+
+@router.post("/delete-account", status_code=status.HTTP_204_NO_CONTENT)
+def delete_account(
+    body: AccountDelete,
+    response: Response,
+    user: CurrentUser,
+    db: DbSession,
+    now: Annotated[datetime, Depends(get_now)],
+) -> None:
+    """Permanently erase the account and all its data. Needs the password, and cannot be undone."""
+    key = throttle.password_key(user.id)
+    _refuse_if_throttled(db, key, now)
+    if not auth_service.verify_password(user.password_hash, body.password):
+        throttle.record_failure(db, key, now)
+        db.commit()
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "That password isn't right.")
+    throttle.clear(db, key)
+    throttle.clear(db, throttle.login_key(user.email))
+    auth_service.delete_account(db, user)
+    db.commit()
+    response.delete_cookie(SESSION_COOKIE_NAME)

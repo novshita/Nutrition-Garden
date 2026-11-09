@@ -39,3 +39,10 @@ export function buildPasswordChange({ current, next, confirm }: PasswordForm): P
   if (Object.keys(errors).length > 0) return { ok: false, errors };
   return { ok: true, payload: { current_password: current, new_password: next } };
 }
+
+export function buildDeleteRequest(
+  password: string,
+): { ok: true; payload: { password: string } } | { ok: false; error: string } {
+  if (!password) return { ok: false, error: "Please enter your password to confirm." };
+  return { ok: true, payload: { password } };
+}

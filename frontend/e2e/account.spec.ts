@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { PASSWORD, newEmail, register, signUpAndOnboard, visit } from "./helpers";
+import { PASSWORD, newEmail, onboard, register, signUpAndOnboard, visit } from "./helpers";
 
 const NEW_PASSWORD = "a-brand-new-password";
 
@@ -106,4 +106,66 @@ test("too many wrong passwords slows sign-in down, calmly", async ({ page }) => 
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByRole("alert").filter({ hasText: /Too many attempts.*wait about 15 minutes/ })).toBeVisible();
   await expect(page).toHaveURL(/\/login$/);
+});
+
+test.describe("deleting the account", () => {
+  test("it asks first, and 'keep my account' backs out", async ({ page }) => {
+    await signUpAndOnboard(page);
+    await visit(page, "/settings");
+    await page.getByRole("button", { name: "Delete my account…" }).click();
+    await expect(page.getByText(/It can't be undone/)).toBeVisible();
+    await page.getByRole("button", { name: "Keep my account" }).click();
+    await expect(page.getByRole("button", { name: "Delete my account…" })).toBeVisible();
+    await page.reload();
+    await expect(page.getByRole("heading", { name: "Your details" })).toBeVisible();
+  });
+
+  test("a missing or wrong password deletes nothing", async ({ page }) => {
+    await signUpAndOnboard(page);
+    await visit(page, "/settings");
+    await page.getByRole("button", { name: "Delete my account…" }).click();
+    await page.getByRole("button", { name: "Permanently delete my account" }).click();
+    await expect(page.getByText("Please enter your password to confirm.")).toBeVisible();
+    await page.getByLabel("Your password").fill("not-my-password");
+    await page.getByRole("button", { name: "Permanently delete my account" }).click();
+    await expect(page.getByText("That password isn't right.")).toBeVisible();
+    await page.reload();
+    await expect(page.getByRole("heading", { name: "Your details" })).toBeVisible();
+  });
+
+  test("with the right password the account is erased and cannot be used again", async ({ page }) => {
+    const email = await signUpAndOnboard(page);
+    await visit(page, "/settings");
+    await page.getByRole("button", { name: "Delete my account…" }).click();
+    await page.getByLabel("Your password").fill(PASSWORD);
+    await page.getByRole("button", { name: "Permanently delete my account" }).click();
+    await expect(page).toHaveURL(/\/login$/);
+
+    await visit(page, "/food");
+    await expect(page).toHaveURL(/\/login$/); // no session any more
+
+    await page.getByLabel("Email").fill(email);
+    await page.getByLabel("Password", { exact: true }).fill(PASSWORD);
+    await page.getByRole("button", { name: "Sign in" }).click();
+    await expect(page.getByRole("alert").filter({ hasText: "Invalid email or password" })).toBeVisible();
+  });
+
+  test("the same email can start over with a clean garden", async ({ page }) => {
+    const email = await signUpAndOnboard(page);
+    await visit(page, "/weight");
+    await page.getByLabel("Weight (kg)").fill("52.4");
+    await page.getByRole("button", { name: "Save weight" }).click();
+    await expect(page.getByText("52.4 kg").first()).toBeVisible();
+
+    await visit(page, "/settings");
+    await page.getByRole("button", { name: "Delete my account…" }).click();
+    await page.getByLabel("Your password").fill(PASSWORD);
+    await page.getByRole("button", { name: "Permanently delete my account" }).click();
+    await expect(page).toHaveURL(/\/login$/);
+
+    await register(page, email);
+    await onboard(page);
+    await visit(page, "/weight");
+    await expect(page.getByText("52.4 kg")).toHaveCount(0);
+  });
 });
