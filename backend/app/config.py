@@ -158,6 +158,10 @@ class Settings(BaseSettings):
 
     # Optional
     ai_model: str | None = None
+    # Use another OpenAI-compatible provider (for example Google Gemini's free tier). Then AI_MODEL is
+    # required, and AI_API_KEY (if set) is used instead of OPENAI_API_KEY.
+    ai_base_url: str | None = None
+    ai_api_key: str | None = None
     log_level: str = "INFO"
 
 

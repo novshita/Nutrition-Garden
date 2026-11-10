@@ -12,7 +12,9 @@ TODAY = datetime.now(UTC).date()
 
 
 def eat(client, days_ago, protein, calories=300, name="Meal"):
-    at = (datetime.now(UTC) - timedelta(days=days_ago)).replace(hour=12, minute=0)
+    # Midday on past days; "just now" for today, so the test works at any time of day.
+    now = datetime.now(UTC) - timedelta(seconds=30)
+    at = now if days_ago == 0 else (now - timedelta(days=days_ago)).replace(hour=12, minute=0)
     item = {
         "food_source": "CUSTOM",
         "food_name": name,

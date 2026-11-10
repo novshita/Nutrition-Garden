@@ -7,7 +7,6 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.deps import CurrentUser, DbSession, get_now
 from app.api.v1.food_log import save_food_log
-from app.config import get_settings
 from app.enums import LogSource
 from app.schemas.ai import (
     AiFoodConfirm,
@@ -29,6 +28,7 @@ from app.services.ai.client import (
     AiInvalidOutputError,
     AiLimitError,
     AiUnavailableError,
+    ai_available,
     get_ai_client,
 )
 from app.services.nutrition.usda_client import UsdaClient, get_usda_client
@@ -63,7 +63,7 @@ def ai_errors() -> Iterator[None]:
 @router.get("/status", response_model=AiStatus)
 def ai_status(user: CurrentUser) -> AiStatus:
     """Whether AI is set up, so the interface can hide AI features if it isn't."""
-    return AiStatus(available=bool(get_settings().openai_api_key))
+    return AiStatus(available=ai_available())
 
 
 @router.post("/food-interpretation", response_model=FoodInterpretationResponse)
