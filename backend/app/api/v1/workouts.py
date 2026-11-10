@@ -1,7 +1,7 @@
 import uuid
 from datetime import date
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, Response, status
 
 from app.api.deps import CurrentUser, DbSession
 from app.schemas.workouts import (
@@ -95,3 +95,13 @@ def list_sessions(
 ) -> list[SessionOut]:
     sessions = service.list_sessions(db, user, start_date, end_date, limit)
     return [service.session_out(s) for s in sessions]
+
+
+@router.delete("/sessions/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_session(session_id: uuid.UUID, user: CurrentUser, db: DbSession) -> Response:
+    try:
+        service.delete_session(db, user, session_id)
+    except NotFoundError:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Workout not found") from None
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

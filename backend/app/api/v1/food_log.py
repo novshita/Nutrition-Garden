@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import CurrentUser, DbSession
 from app.enums import LogSource
 from app.models import User
-from app.schemas.food_log import FoodLogCreate, FoodLogDay, FoodLogOut
+from app.schemas.food_log import FoodItemUpdate, FoodLogCreate, FoodLogDay, FoodLogOut
 from app.services.errors import NotFoundError
 from app.services.nutrition import food_logging
 from app.services.nutrition.usda_client import (
@@ -83,3 +83,28 @@ def delete_food_log_item(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Food log item not found") from None
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.patch("/{log_id}/items/{item_id}", response_model=FoodLogOut)
+def update_food_log_item(
+    log_id: uuid.UUID, item_id: uuid.UUID, body: FoodItemUpdate, user: CurrentUser, db: DbSession, usda: Usda
+) -> FoodLogOut:
+    """Correct the amount of one food in a meal."""
+    try:
+        log = food_logging.update_item(db, user, usda, log_id, item_id, body)
+    except NotFoundError:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Food log item not found") from None
+    except food_logging.NotEditableError as exc:
+        raise HTTPException(422, str(exc)) from None
+    except UsdaNotFoundError:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "This food was not found") from None
+    except UsdaUnavailableError:
+        raise HTTPException(
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+            "The food database is temporarily unavailable. Please try again.",
+        ) from None
+    except food_logging.UnknownUnitError as exc:
+        raise HTTPException(422, str(exc)) from None
+    out = food_logging.log_out(log)
+    db.commit()
+    return out

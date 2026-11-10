@@ -222,6 +222,17 @@ def create_session(db: Session, user: User, data: SessionCreate) -> WorkoutSessi
     return session
 
 
+def delete_session(db: Session, user: User, session_id: uuid.UUID) -> None:
+    """Remove a recorded workout (its sets go with it). Garden growth already earned is kept (spec §39)."""
+    session = db.scalar(
+        select(WorkoutSession).where(WorkoutSession.id == session_id, WorkoutSession.user_id == user.id)
+    )
+    if session is None:
+        raise NotFoundError
+    db.delete(session)
+    db.flush()
+
+
 def list_sessions(
     db: Session, user: User, start_date: date | None, end_date: date | None, limit: int
 ) -> list[WorkoutSession]:
