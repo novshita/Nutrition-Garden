@@ -5,6 +5,7 @@ a separate endpoint, which does the nutrition lookup and creates the log.
 """
 
 import math
+from concurrent.futures import ThreadPoolExecutor
 
 from sqlalchemy.orm import Session
 
@@ -21,7 +22,7 @@ from app.services.ai import prompts
 from app.services.ai.client import AiClient, AiInvalidOutputError
 from app.services.ai.usage import consume_ai_call
 from app.services.nutrition import food_service
-from app.services.nutrition.usda_client import UsdaClient
+from app.services.nutrition.usda_client import UsdaClient, UsdaUnavailableError
 
 MAX_ITEMS = 20
 
@@ -92,12 +93,28 @@ def interpret(
 
     # Database matches help the person pick what they actually ate. If USDA is down this falls back
     # to foods they've used before, and never blocks the proposal.
+    names = [i.food_name for i in interpretation.items[: config.AI_FOOD_LOOKUP_ITEMS]]
+    data_types = food_service.GENERIC_DATA_TYPES
+    # The slow part is waiting on USDA, so those requests run side by side. They touch no database
+    # session; the cache fallback and the response building below stay on this thread.
+    def fetch(name: str):
+        try:
+            return usda.search(name, 1, config.AI_FOOD_CANDIDATES, data_types)
+        except UsdaUnavailableError:
+            return None
+
+    with ThreadPoolExecutor(max_workers=max(1, min(5, len(names)))) as pool:
+        raws = list(pool.map(fetch, names))
     lookups = []
-    for item in interpretation.items[: config.AI_FOOD_LOOKUP_ITEMS]:
-        found = food_service.search_foods(
-            db, usda, item.food_name, 1, config.AI_FOOD_MATCHES_PER_ITEM, include_branded=False
-        )
-        lookups.append(ItemMatches(food_name=item.food_name, source=found.source, matches=found.results))
+    for name, raw in zip(names, raws, strict=True):
+        try:
+            if raw is None:
+                raise UsdaUnavailableError("unavailable")
+            found = food_service.build_search_response(raw, name, 1)
+            found.results = found.results[: config.AI_FOOD_MATCHES_PER_ITEM]
+        except (UsdaUnavailableError, KeyError, TypeError, ValueError):
+            found = food_service.search_cache(db, name, 1, config.AI_FOOD_MATCHES_PER_ITEM)
+        lookups.append(ItemMatches(food_name=name, source=found.source, matches=found.results))
     if not isinstance(interpretation, FoodInterpretation):  # pragma: no cover - defensive
         raise AiInvalidOutputError("Unexpected interpretation")
     return FoodInterpretationResponse(interpretation=interpretation, lookups=lookups)

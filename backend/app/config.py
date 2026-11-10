@@ -121,6 +121,7 @@ AI_MAX_CHAT_MESSAGE = 2000
 AI_MAX_CHAT_HISTORY = 10  # earlier messages the client may send back
 AI_FOOD_LOOKUP_ITEMS = 10  # how many interpreted foods get database matches
 AI_FOOD_MATCHES_PER_ITEM = 3
+AI_FOOD_CANDIDATES = 15  # fetched per item, then ranked so the plain food comes first
 
 # Memory: a limited amount, only ever with the person's approval (product spec §41).
 MAX_APPROVED_MEMORIES = 50
