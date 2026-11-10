@@ -165,6 +165,37 @@ def delete_item(db: Session, user: User, log_id: uuid.UUID, item_id: uuid.UUID) 
     db.flush()
 
 
+class NotEditableError(ValueError):
+    pass
+
+
+def update_item(
+    db: Session, user: User, client: UsdaClient, log_id: uuid.UUID, item_id: uuid.UUID, data
+) -> FoodLog:
+    """Change the amount of one USDA food in a meal; its nutrition is recalculated.
+
+    A custom food's numbers were typed in for one particular amount, so scaling them would be a guess:
+    those must be removed and added again instead.
+    """
+    log = _get_owned_log(db, user, log_id)
+    item = next((i for i in log.items if i.id == item_id), None)
+    if item is None:
+        raise NotFoundError
+    if item.food_source != FoodSource.USDA or item.external_food_id is None:
+        raise NotEditableError("Remove this food and add it again with the new amount")
+    fresh = _usda_item(
+        db, client, UsdaItemIn(food_source="USDA", fdc_id=int(item.external_food_id), **data.model_dump()), item.position
+    )  # may raise Usda* / UnknownUnitError before anything is changed
+    for column in (
+        "quantity", "unit", "serving_size", "calories", "protein_g", "carbohydrate_g",
+        "fat_g", "fiber_g", "micronutrients_json",
+    ):
+        setattr(item, column, getattr(fresh, column))
+    item.confidence = None  # now the person's own number, not an AI reading
+    db.flush()
+    return log
+
+
 def daily_totals(logs: list[FoodLog]) -> calc.NutritionTotals:
     return calc.compute_totals(item for log in logs for item in log.items)
 

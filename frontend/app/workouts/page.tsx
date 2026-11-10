@@ -66,7 +66,7 @@ export default function WorkoutsPage() {
       {templates.data && (
         <SessionForm key={JSON.stringify(templates.data)} templates={templates.data} timeZone={timeZone} onSaved={sessions.reload} />
       )}
-      {sessions.data && <SessionList sessions={sessions.data} timeZone={timeZone} />}
+      {sessions.data && <SessionList sessions={sessions.data} timeZone={timeZone} onChanged={sessions.reload} />}
     </div>
   );
 }

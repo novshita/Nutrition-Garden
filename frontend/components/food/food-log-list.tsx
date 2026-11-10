@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { api, ApiError } from "@/lib/api/client";
@@ -13,6 +14,28 @@ const timeOf = (iso: string) =>
 
 export function FoodLogList({ logs, onChanged }: { logs: FoodLog[]; onChanged: () => void }) {
   const [error, setError] = useState<string | null>(null);
+
+  const [editing, setEditing] = useState<{ itemId: string; quantity: string; unit: string } | null>(null);
+
+  async function saveEdit(logId: string) {
+    if (!editing) return;
+    const quantity = Number(editing.quantity);
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      setError("Enter an amount greater than zero.");
+      return;
+    }
+    setError(null);
+    try {
+      await api(`/food/log/${logId}/items/${editing.itemId}`, {
+        method: "PATCH",
+        body: { quantity, unit: editing.unit.trim() },
+      });
+      setEditing(null);
+      onChanged();
+    } catch (caught) {
+      setError(caught instanceof ApiError ? caught.message : "Something went wrong.");
+    }
+  }
 
   async function removeItem(logId: string, itemId: string) {
     setError(null);
@@ -50,23 +73,69 @@ export function FoodLogList({ logs, onChanged }: { logs: FoodLog[]; onChanged: (
               {log.items.map((item) => (
                 <li
                   key={item.id}
-                  className="flex items-center justify-between gap-2 rounded-lg bg-secondary px-3 py-2 text-sm"
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-secondary px-3 py-2 text-sm"
                 >
-                  <span>
-                    {item.quantity} {item.unit} · {item.food_name}
-                    <span className="text-muted-foreground">
-                      {item.calories === null ? "" : ` · ${formatInt(item.calories)} kcal`}
+                  {editing?.itemId === item.id ? (
+                    <form
+                      className="flex flex-wrap items-center gap-2"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        void saveEdit(log.id);
+                      }}
+                    >
+                      <Input
+                        aria-label={`Amount of ${item.food_name}`}
+                        className="w-24"
+                        inputMode="decimal"
+                        value={editing.quantity}
+                        onChange={(e) => setEditing({ ...editing, quantity: e.target.value })}
+                      />
+                      <Input
+                        aria-label={`Unit for ${item.food_name}`}
+                        className="w-32"
+                        value={editing.unit}
+                        onChange={(e) => setEditing({ ...editing, unit: e.target.value })}
+                      />
+                      <Button type="submit" size="sm">
+                        Save
+                      </Button>
+                      <Button type="button" size="sm" variant="outline" onClick={() => setEditing(null)}>
+                        Cancel
+                      </Button>
+                    </form>
+                  ) : (
+                    <span>
+                      {item.quantity} {item.unit} · {item.food_name}
+                      <span className="text-muted-foreground">
+                        {item.calories === null ? "" : ` · ${formatInt(item.calories)} kcal`}
+                      </span>
                     </span>
+                  )}
+                  <span className="flex gap-1">
+                    {item.food_source !== "CUSTOM" && item.external_food_id !== null && editing?.itemId !== item.id && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        aria-label={`Edit ${item.food_name}`}
+                        onClick={() => {
+                          setError(null);
+                          setEditing({ itemId: item.id, quantity: String(item.quantity), unit: item.unit });
+                        }}
+                      >
+                        Edit
+                      </Button>
+                    )}
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      aria-label={`Remove ${item.food_name}`}
+                      onClick={() => removeItem(log.id, item.id)}
+                    >
+                      Remove
+                    </Button>
                   </span>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    aria-label={`Remove ${item.food_name}`}
-                    onClick={() => removeItem(log.id, item.id)}
-                  >
-                    Remove
-                  </Button>
                 </li>
               ))}
             </ul>

@@ -100,6 +100,26 @@ test.describe("workouts", () => {
     await expect(kept).toContainText("Upper Body");
   });
 
+  test("a recorded workout can be deleted after confirming", async ({ page }) => {
+    await createWorkout(page, "Upper Body", "Push-ups");
+    await page.getByLabel("Which workout?").selectOption({ label: "Upper Body" });
+    await page.getByLabel("Day", { exact: true }).fill(daysAgo(2));
+    await page.getByLabel("Started at").fill("08:00");
+    await page.getByLabel("Minutes").fill("20");
+    await page.getByRole("button", { name: "Save workout" }).last().click();
+    const item = page.getByRole("listitem").filter({ hasText: "Upper Body" }).filter({ hasText: "20 min" });
+    await expect(item).toBeVisible();
+
+    await item.getByRole("button", { name: /^Delete workout/ }).click();
+    await item.getByRole("button", { name: "Keep it" }).click(); // changing my mind leaves it alone
+    await expect(item).toBeVisible();
+
+    await item.getByRole("button", { name: /^Delete workout/ }).click();
+    await item.getByRole("button", { name: "Yes, delete it" }).click();
+    await expect(item).toHaveCount(0);
+    await expect(page.getByText("Nothing recorded yet, and that's fine.")).toBeVisible();
+  });
+
   test("a session can still be recorded without any per-set detail", async ({ page }) => {
     await createWorkout(page, "Upper Body", "Push-ups");
     await page.getByLabel("Which workout?").selectOption({ label: "Upper Body" });

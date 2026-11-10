@@ -52,6 +52,13 @@ class FoodLogCreate(BaseModel):
         return self
 
 
+class FoodItemUpdate(BaseModel):
+    """Correct how much of a USDA food was eaten. The nutrition is recalculated by the backend."""
+
+    quantity: float = Field(gt=0, le=100_000, allow_inf_nan=False)
+    unit: str = Field(min_length=1, max_length=100)
+
+
 class FoodLogItemOut(BaseModel):
     id: uuid.UUID
     food_source: FoodSource
