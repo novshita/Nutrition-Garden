@@ -1,5 +1,5 @@
 import uuid
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import func, select
 
@@ -35,7 +35,7 @@ def fill_account(client, db, user_id):
     end = datetime.now(UTC) - timedelta(minutes=5)
     client.post("/api/v1/weight", json={"weight_kg": 51})
     client.post("/api/v1/water", json={"amount_ml": 500})
-    day = date.today().isoformat()
+    day = datetime.now(UTC).date().isoformat()
     client.put(f"/api/v1/sleep/{day}", json={"duration_minutes": 480})
     client.put(f"/api/v1/mood/{day}", json={"mood": "GOOD"})
     client.put(f"/api/v1/activity/{day}", json={"steps": 3000})
@@ -82,8 +82,8 @@ def fill_account(client, db, user_id):
         },
     )
     db.add(AiMemory(user_id=user_id, category=MemoryCategory.OTHER, memory_text="x", status=MemoryStatus.PENDING))
-    db.add(FairyNudge(user_id=user_id, nudge_date=date.today(), kind=NudgeKind.LOW_INTAKE))
-    db.add(AiUsage(user_id=user_id, usage_date=date.today(), calls=3))
+    db.add(FairyNudge(user_id=user_id, nudge_date=datetime.now(UTC).date(), kind=NudgeKind.LOW_INTAKE))
+    db.add(AiUsage(user_id=user_id, usage_date=datetime.now(UTC).date(), calls=3))
     db.flush()
 
 

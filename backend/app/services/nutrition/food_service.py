@@ -23,6 +23,40 @@ def _escape_like(text: str) -> str:
     return text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
 
+# Words that mark a processed or unusual form of a food. Someone searching "banana" almost always means
+# the plain fruit, so these sink down the list (they are never removed).
+_PROCESSED_WORDS = frozenset(
+    ["dehydrated", "dried", "powder", "powdered", "flour", "chips", "freeze-dried", "babyfood", "infant", "juice", "syrup", "candied", "canned", "frozen", "flavored", "imitation", "substitute"]
+)
+
+
+def rank_foods(foods: list[FoodItem], query: str) -> list[FoodItem]:
+    """Plain, closely-named foods first. A stable sort, so USDA's own order breaks ties."""
+    wanted = query.lower().split()
+
+    def key(food: FoodItem) -> tuple[int, int, int]:
+        words = [w.strip(",()") for w in food.name.lower().replace(",", " , ").split()]
+        first_part = food.name.lower().split(",")[0].strip()
+        starts = 0 if wanted and first_part.startswith(wanted[0]) else 1
+        processed = sum(1 for w in words if w in _PROCESSED_WORDS)
+        return (starts, processed, len(words))
+
+    return sorted(foods, key=key)
+
+
+def build_search_response(raw: dict, query: str, page: int) -> FoodSearchResponse:
+    """Turn a raw USDA search answer into our response (raises on an unusable payload)."""
+    foods = [normalize_food(item) for item in raw.get("foods", []) if "fdcId" in item]
+    return FoodSearchResponse(
+        query=query,
+        page=int(raw.get("currentPage", page)),
+        total_hits=int(raw.get("totalHits", len(foods))),
+        total_pages=int(raw.get("totalPages", 1)),
+        results=rank_foods(foods, query),
+        source="usda",
+    )
+
+
 def search_foods(
     db: Session,
     client: UsdaClient,
@@ -33,22 +67,13 @@ def search_foods(
 ) -> FoodSearchResponse:
     data_types = GENERIC_DATA_TYPES + ([BRANDED_DATA_TYPE] if include_branded else [])
     try:
-        raw = client.search(query, page, page_size, data_types)
-        foods = [normalize_food(item) for item in raw.get("foods", []) if "fdcId" in item]
-        return FoodSearchResponse(
-            query=query,
-            page=int(raw.get("currentPage", page)),
-            total_hits=int(raw.get("totalHits", len(foods))),
-            total_pages=int(raw.get("totalPages", 1)),
-            results=foods,
-            source="usda",
-        )
+        return build_search_response(client.search(query, page, page_size, data_types), query, page)
     except (UsdaUnavailableError, KeyError, TypeError, ValueError):
         logger.warning("USDA search unavailable; falling back to cached foods")
-        return _search_cache(db, query, page, page_size)
+        return search_cache(db, query, page, page_size)
 
 
-def _search_cache(db: Session, query: str, page: int, page_size: int) -> FoodSearchResponse:
+def search_cache(db: Session, query: str, page: int, page_size: int) -> FoodSearchResponse:
     pattern = f"%{_escape_like(query)}%"
     where = UsdaFoodCache.name.ilike(pattern, escape="\\")
     rows = list(

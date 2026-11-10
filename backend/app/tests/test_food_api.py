@@ -128,3 +128,16 @@ def test_cached_food_data_is_shared_reference_data(client, usda):
     client.get("/api/v1/food/168878")
     signup(client, "b@example.com")
     assert client.get("/api/v1/food/168878").json()["source"] == "cache"
+
+
+def test_plain_foods_rank_above_processed_forms():
+    from app.schemas.nutrition import FoodItem
+    from app.services.nutrition.food_service import rank_foods
+
+    def food(i, name):
+        return FoodItem(fdc_id=i, name=name, data_type="SR Legacy", nutrition_per_100g={}, portions=[], micronutrients={})
+
+    names = ["Bananas, dehydrated, or banana powder", "Banana chips", "Bananas, raw", "Babyfood, banana juice"]
+    ranked = rank_foods([food(i, n) for i, n in enumerate(names)], "banana")
+    assert ranked[0].name == "Bananas, raw"
+    assert {f.name for f in ranked} == set(names)  # nothing is dropped
