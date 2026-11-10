@@ -32,9 +32,13 @@ def test_requires_authentication(client, ai, usda):
 
 def test_status_reflects_whether_a_key_is_configured(client, ai, monkeypatch):
     signup(client)
-    monkeypatch.setattr("app.api.v1.ai.get_settings", lambda: type("S", (), {"openai_api_key": ""})())
+    def settings(key):
+        values = {"openai_api_key": key, "ai_api_key": None, "ai_base_url": None, "ai_model": None}
+        return lambda: type("S", (), values)()
+
+    monkeypatch.setattr("app.services.ai.client.get_settings", settings(""))
     assert client.get("/api/v1/ai/status").json() == {"available": False}
-    monkeypatch.setattr("app.api.v1.ai.get_settings", lambda: type("S", (), {"openai_api_key": "k"})())
+    monkeypatch.setattr("app.services.ai.client.get_settings", settings("k"))
     assert client.get("/api/v1/ai/status").json() == {"available": True}
 
 

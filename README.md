@@ -107,6 +107,20 @@ from the backend. Set `OPENAI_API_KEY` in `.env`; optionally set `AI_MODEL` (the
 `backend/app/config.py`). Without a key the AI endpoints answer with a calm "the fairy is resting"
 message, and everything else keeps working: AI is an enhancement layer, never a dependency.
 
+### Using a free AI provider (Google Gemini)
+
+OpenAI's API is paid. Any OpenAI-compatible provider works instead; Google Gemini has a free tier
+(key from https://aistudio.google.com/apikey). In `.env`, leave `OPENAI_API_KEY=` empty and add:
+
+```
+AI_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/
+AI_API_KEY=<your Gemini key>
+AI_MODEL=<a Gemini model name, for example gemini-2.5-flash>
+```
+
+Restart the backend. Free tiers are rate-limited, and some may use what you send to improve their
+products, so check the provider's data terms before using real health details.
+
 - AI proposes, the person decides. A food proposal is only saved through the confirm endpoint, a memory
   only becomes usable after the person approves it, and no AI code can change a goal.
 - Each person has a daily AI call limit (`AI_DAILY_CALL_LIMIT` in config) so an open signup can't run up
