@@ -13,6 +13,6 @@ ADMIN_URL="${ADMIN_URL/+psycopg/}"
 dropdb --maintenance-db="$ADMIN_URL" --if-exists "$E2E_DB"
 createdb --maintenance-db="$ADMIN_URL" "$E2E_DB"
 
-export OPENAI_API_KEY="" USDA_API_KEY="" AUTH_SECRET="e2e-only-secret" APP_ENV="development"
+export OPENAI_API_KEY="" AI_API_KEY="" AI_BASE_URL="" AI_MODEL="" SMTP_HOST="" USDA_API_KEY="" AUTH_SECRET="e2e-only-secret" APP_ENV="development"
 .venv/bin/alembic upgrade head
 exec .venv/bin/uvicorn app.main:app --port 8100
