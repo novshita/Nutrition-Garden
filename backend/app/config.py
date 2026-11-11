@@ -26,6 +26,10 @@ SESSION_LIFETIME_DAYS = 30
 LOGIN_MAX_FAILURES = 5
 LOGIN_FAILURE_WINDOW_MINUTES = 15
 
+# Forgotten-password links: valid for an hour, and at most a few requested per hour per account.
+PASSWORD_RESET_LIFETIME_MINUTES = 60
+PASSWORD_RESET_MAX_PER_HOUR = 3
+
 # Bounds for a user-set calorie target (spec §42: no extreme restriction, no unsafe gain).
 MIN_CALORIE_TARGET_KCAL = 1200
 MAX_CALORIE_TARGET_KCAL = 6000
@@ -164,6 +168,17 @@ class Settings(BaseSettings):
     ai_base_url: str | None = None
     ai_api_key: str | None = None
     log_level: str = "INFO"
+    # Email for password-reset links. With no SMTP_HOST the link is only written to the log in
+    # development, so nothing is ever sent from a machine that isn't set up for it.
+    # Cookies are marked Secure (HTTPS only) in production. Set COOKIE_SECURE=false only to try a
+    # production build over plain http://localhost; never on a real site.
+    cookie_secure: bool | None = None
+    app_base_url: str = "http://localhost:3000"
+    smtp_host: str | None = None
+    smtp_port: int = 587
+    smtp_user: str | None = None
+    smtp_password: str | None = None
+    smtp_from: str | None = None
 
 
 @lru_cache

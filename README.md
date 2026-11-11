@@ -91,6 +91,25 @@ every page and settings. It starts its own backend (port 8100, a throwaway `nutr
 database that is dropped and recreated each run, AI switched off) and its own Next.js server (port 3200),
 so it never touches your dev data or the app on 3000/8000. One-time setup: `npx playwright install chromium`.
 
+### Running with Docker (deployment)
+
+`docker-compose.yml` runs the database, backend and frontend together. Copy `.env.example` to `.env`, fill
+in `USDA_API_KEY`, `AUTH_SECRET` (a long random string), `POSTGRES_PASSWORD` and your AI settings, then:
+
+```bash
+docker compose up --build
+```
+
+Open http://localhost:3000. The database is created on first start and migrated on every start; its data
+lives in the `db-data` volume. Only the frontend is exposed: it forwards `/api/v1` to the backend, which
+stays private. On a real server:
+
+- Put it behind HTTPS (a reverse proxy such as Caddy or nginx) and set `COOKIE_SECURE=true`. The
+  compose default is `false` only so you can try it on plain `http://localhost`.
+- Set `APP_BASE_URL` to the public address and the `SMTP_*` values so password-reset emails go out.
+  With no `SMTP_HOST` in development the reset link is printed in the backend log instead.
+- Back up the `db-data` volume.
+
 ## Ground rules
 
 - Calculations (BMI, BMR, TDEE, targets, totals, trends, garden growth) are deterministic and live in the backend. AI never calculates them.
@@ -133,6 +152,9 @@ Every feature the specs define is built, on both sides.
 
 - **Account security:** password change (signs out other devices), display-name editing, and a limit on
   wrong passwords (`LOGIN_MAX_FAILURES` per `LOGIN_FAILURE_WINDOW_MINUTES` in `backend/app/config.py`).
+- **Password reset:** "Forgot your password?" emails a one-hour, one-use link (`SMTP_*` in `.env`); using it
+  signs the account out everywhere. **Corrections:** a logged USDA food's amount can be edited, and a
+  recorded workout can be deleted.
 - **Workouts:** templates can be edited and deleted (recorded sessions keep their names), and a session can
   record each set. **Water:** a 2 L daily goal (`WATER_TARGET_ML` in `backend/app/config.py`), shown as progress.
 - **Protein:** counted and summarised for the week (`/api/v1/nutrition/protein/week`), with a gentle

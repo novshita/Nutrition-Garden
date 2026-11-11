@@ -1,24 +1,38 @@
 from datetime import datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
+from fastapi import APIRouter, BackgroundTasks, Cookie, Depends, HTTPException, Response, status
 from sqlalchemy.exc import IntegrityError
 
 from app.api.deps import CurrentUser, DbSession, get_now
-from app.config import SESSION_COOKIE_NAME, SESSION_LIFETIME_DAYS, get_settings
+from app.config import (
+    PASSWORD_RESET_LIFETIME_MINUTES,
+    SESSION_COOKIE_NAME,
+    SESSION_LIFETIME_DAYS,
+    get_settings,
+)
 from app.models import User
 from app.schemas.auth import (
     AccountDelete,
     DisplayNameUpdate,
+    ForgotPassword,
     LoginRequest,
     PasswordChange,
     RegisterRequest,
+    ResetPassword,
     UserResponse,
 )
 from app.services import auth as auth_service
-from app.services import throttle
+from app.services import mailer, throttle
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+def _cookie_secure() -> bool:
+    settings = get_settings()
+    if settings.cookie_secure is not None:
+        return settings.cookie_secure
+    return settings.app_env == "production"
 
 
 def _set_session_cookie(response: Response, token: str) -> None:
@@ -28,7 +42,7 @@ def _set_session_cookie(response: Response, token: str) -> None:
         max_age=SESSION_LIFETIME_DAYS * 24 * 60 * 60,
         httponly=True,
         samesite="lax",
-        secure=get_settings().app_env == "production",
+        secure=_cookie_secure(),
     )
 
 
@@ -81,6 +95,43 @@ def login(
     db.commit()
     _set_session_cookie(response, token)
     return user
+
+
+@router.post("/forgot-password", status_code=status.HTTP_202_ACCEPTED)
+def forgot_password(
+    body: ForgotPassword,
+    db: DbSession,
+    background: BackgroundTasks,
+    now: Annotated[datetime, Depends(get_now)],
+) -> dict[str, str]:
+    """Always answers the same way, so it can't be used to find out which emails have accounts."""
+    user = auth_service.get_user_by_email(db, body.email)
+    if user is not None:
+        token = auth_service.start_password_reset(db, user, now)
+        db.commit()
+        if token is not None:
+            link = f"{get_settings().app_base_url.rstrip('/')}/reset-password?token={token}"
+            background.add_task(
+                mailer.send_email,
+                user.email,
+                "Reset your Nutrition Garden password",
+                "Hi,\n\nUse this link to choose a new password. It works once and expires in "
+                f"{PASSWORD_RESET_LIFETIME_MINUTES} minutes:\n\n{link}\n\n"
+                "If you didn't ask for this, you can ignore this email; your password hasn't changed.",
+            )
+    return {"detail": "If that email has an account, a reset link is on its way."}
+
+
+@router.post("/reset-password", status_code=status.HTTP_204_NO_CONTENT)
+def reset_password(
+    body: ResetPassword, db: DbSession, now: Annotated[datetime, Depends(get_now)]
+) -> None:
+    if not auth_service.finish_password_reset(db, body.token, body.new_password, now):
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST,
+            "This reset link isn't valid any more. Please ask for a new one.",
+        )
+    db.commit()
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)

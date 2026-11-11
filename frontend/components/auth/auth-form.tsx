@@ -90,8 +90,12 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-            {isRegister && (
+            {isRegister ? (
               <p className="text-xs text-muted-foreground">At least {MIN_PASSWORD_LENGTH} characters.</p>
+            ) : (
+              <Link href="/forgot-password" className="text-xs text-muted-foreground underline-offset-4 hover:underline">
+                Forgot your password?
+              </Link>
             )}
           </div>
           <p role="alert" aria-live="polite" className="min-h-5 text-sm text-destructive">

@@ -273,3 +273,19 @@ def test_no_response_exposes_password_material(client):
     body = register(client).json()
     assert set(body) == {"id", "email", "display_name"}
     assert set(client.patch("/api/v1/auth/me", json={"display_name": "R"}).json()) == set(body)
+
+
+def test_the_cookie_is_secure_in_production_unless_told_otherwise(client, monkeypatch):
+    import app.api.v1.auth as auth_api
+
+    def settings(env, flag):
+        return type("S", (), {"app_env": env, "cookie_secure": flag})()
+
+    for env, flag, expected in [
+        ("production", None, True),
+        ("development", None, False),
+        ("production", False, False),
+        ("development", True, True),
+    ]:
+        monkeypatch.setattr(auth_api, "get_settings", lambda e=env, f=flag: settings(e, f))
+        assert auth_api._cookie_secure() is expected

@@ -7,11 +7,16 @@ from datetime import UTC, datetime, timedelta
 
 from argon2 import PasswordHasher
 from argon2.exceptions import InvalidHashError, VerificationError
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
-from app.config import SESSION_LIFETIME_DAYS, get_settings
-from app.models import AuthSession, User
+from app.config import (
+    PASSWORD_RESET_LIFETIME_MINUTES,
+    PASSWORD_RESET_MAX_PER_HOUR,
+    SESSION_LIFETIME_DAYS,
+    get_settings,
+)
+from app.models import AuthSession, PasswordReset, User
 
 _hasher = PasswordHasher()
 # Verified against when the email is unknown so login timing doesn't reveal valid emails.
@@ -97,3 +102,39 @@ def delete_account(db: Session, user: User) -> None:
     """
     db.execute(delete(User).where(User.id == user.id))
     db.expire_all()
+
+
+def start_password_reset(db: Session, user: User, now: datetime) -> str | None:
+    """A new reset token for the account, or None if too many were asked for in the last hour."""
+    db.execute(delete(PasswordReset).where(PasswordReset.expires_at <= now))
+    recent = db.scalar(
+        select(func.count())
+        .select_from(PasswordReset)
+        .where(PasswordReset.user_id == user.id, PasswordReset.created_at > now - timedelta(hours=1))
+    )
+    if (recent or 0) >= PASSWORD_RESET_MAX_PER_HOUR:
+        return None
+    token = secrets.token_urlsafe(32)
+    db.add(
+        PasswordReset(
+            user_id=user.id,
+            token_hash=_hash_token(token),
+            created_at=now,
+            expires_at=now + timedelta(minutes=PASSWORD_RESET_LIFETIME_MINUTES),
+        )
+    )
+    db.flush()
+    return token
+
+
+def finish_password_reset(db: Session, token: str, new_password: str, now: datetime) -> bool:
+    """Set the new password if the link is valid. It works once, and signs the account out everywhere."""
+    reset = db.scalar(select(PasswordReset).where(PasswordReset.token_hash == _hash_token(token)))
+    if reset is None or reset.expires_at <= now:
+        return False
+    user = db.get(User, reset.user_id)
+    user.password_hash = hash_password(new_password)
+    db.execute(delete(PasswordReset).where(PasswordReset.user_id == user.id))
+    db.execute(delete(AuthSession).where(AuthSession.user_id == user.id))
+    db.flush()
+    return True
